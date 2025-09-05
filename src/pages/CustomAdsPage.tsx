@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Camera, 
   Video, 
@@ -90,9 +91,15 @@ export default function CustomAdsPage() {
   });
   const [formErrors, setFormErrors] = useState<Partial<OrderFormData>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const { user }=useAuth();
+  const navigate=useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleServiceSelect = (service: ServiceTile) => {
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
     setSelectedService(service);
     if (service.requiresLocation) {
       setShowDisclaimer(true);

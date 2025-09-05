@@ -33,7 +33,7 @@ export default function HostLanding() {
       </section>
 
       {/* Why Host */}
-      <section id="why" className="px-6 py-16 bg-gray-50 dark:bg-gray-900">
+      <section id="why" className="px-6 py-16">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center">Why Host a Kiosk?</h2>
           <p className="mt-2 text-center">Our digital kiosks offer multiple benefits to your business with zero risk or investment.</p>
@@ -78,7 +78,7 @@ export default function HostLanding() {
       </section>
 
       {/* Specs */}
-      <section className="px-6 py-16 bg-gray-50 dark:bg-gray-900">
+      <section className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center">Kiosk Specifications</h2>
           <p className="mt-2 text-center">Our digital kiosks are designed for maximum impact with minimal requirements.</p>
@@ -121,7 +121,7 @@ export default function HostLanding() {
       </section>
 
       {/* Form */}
-      <section id="form" className="px-6 py-16 bg-gray-50 dark:bg-gray-900">
+      <section id="form" className="px-6 py-16">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center">Ready to Get Started?</h2>
           <p className="mt-2 text-center">We\'re currently placing kiosks across the area and would love to partner with you. Fill out the form below to get in touch or book a quick 10‑minute call.</p>

@@ -46,8 +46,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-            <div className="flex items-center space-x-3">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20 p-1">
+            <Link to="/" className="flex items-center space-x-3 hover:opacity-90 transition-opacity">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20 p-1" >
                 <Logo 
                   size="xl" 
                   showText={false} 
@@ -58,7 +58,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 <span className="text-xl font-bold text-white">EzKiosksAd</span>
                 <p className="text-xs text-white/80">Client Portal</p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden text-white/80 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"

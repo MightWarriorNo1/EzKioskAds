@@ -208,7 +208,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="px-6 py-20 bg-primary-600 text-white dark:bg-primary-600 dark:text-white">
+      <section className="px-6 py-20 bg-primary-600 text-white dark:text-white">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to reach more customers?</h2>
           <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
@@ -221,7 +221,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 py-8 border-t border-gray-200 dark:border-gray-800">
+      <footer className="px-6 py-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <p>© 2025 ezkioskads.com. All rights reserved.</p>
           <div className="flex items-center gap-4">

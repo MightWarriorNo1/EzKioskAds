@@ -70,12 +70,14 @@ export default function DashboardLayout({
       <div className={`fixed left-0 top-0 h-full w-72 bg-white/90 dark:bg-gray-900/80 backdrop-blur border-r border-gray-200 dark:border-gray-800 flex flex-col z-50 transform transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <Logo 
-            size="xl" 
-            showText={true} 
-            textClassName="text-3xl font-bold" 
-            variant="dark"
-          />
+          <Link to="/" className="hover:opacity-90 transition-opacity">
+            <Logo 
+              size="xl" 
+              showText={true} 
+              textClassName="text-3xl font-bold" 
+              variant="dark"
+            />
+          </Link>
         </div>
 
         {/* Navigation */}
