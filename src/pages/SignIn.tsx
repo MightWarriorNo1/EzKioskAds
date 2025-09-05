@@ -74,17 +74,20 @@ export default function SignIn() {
 
   return (
     <AuthLayout>
-      <h3 className="text-base font-semibold text-gray-900 mb-2">Account Login</h3>
-      <p className="text-xs text-gray-500 mb-4">Manage your advertising campaigns and monitor performance</p>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
+      </div>
+
       <form onSubmit={handleSubmit} className={`space-y-6 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all`}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email address
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative group">
+                <Mail className={`h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200 ${
+                  errors.email ? 'text-red-400' : email ? 'text-indigo-500' : 'text-gray-400 group-focus-within:text-indigo-500'
+                }`} />
                 <input
                   id="email"
                   type="email"
@@ -93,30 +96,31 @@ export default function SignIn() {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
-                  className={`w-full pl-10 pr-4 py-3 bg-white border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 ${
-                    errors.email ? 'border-red-400' : 'border-gray-300'
+                  className={`w-full pl-11 pr-4 py-3 border-2 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 hover:border-gray-400 dark:hover:border-gray-600 ${
+                    errors.email 
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/10' 
+                      : 'border-gray-300 dark:border-gray-600 focus:bg-white dark:focus:bg-slate-700'
                   }`}
                   placeholder="Enter your email"
                   required
-                  style={{ color: '#111827' }}
                 />
                 {errors.email && (
-                  <div className="flex items-center mt-1 text-red-600 text-sm">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.email}
+                  <div className="mt-2 flex items-center space-x-2 text-sm text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{errors.email}</span>
                   </div>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative group">
+                <Lock className={`h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200 ${
+                  errors.password ? 'text-red-400' : password ? 'text-indigo-500' : 'text-gray-400 group-focus-within:text-indigo-500'
+                }`} />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -125,58 +129,90 @@ export default function SignIn() {
                     setPassword(e.target.value);
                     if (errors.password) setErrors({ ...errors, password: undefined });
                   }}
-                  className={`w-full pl-10 pr-12 py-3 bg-white border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 ${
-                    errors.password ? 'border-red-400' : 'border-gray-300'
+                  className={`w-full pl-11 pr-12 py-3 border-2 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 hover:border-gray-400 dark:hover:border-gray-600 ${
+                    errors.password 
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/10' 
+                      : 'border-gray-300 dark:border-gray-600 focus:bg-white dark:focus:bg-slate-700'
                   }`}
                   placeholder="Enter your password"
                   required
                   onKeyUp={(e) => setShowCapsWarning((e.getModifierState && e.getModifierState('CapsLock')) || false)}
-                  style={{ color: '#111827' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200 focus:outline-none focus:text-indigo-500"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
                 {errors.password && (
-                  <div className="flex items-center mt-1 text-red-600 text-sm">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.password}
+                  <div className="mt-2 flex items-center space-x-2 text-sm text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{errors.password}</span>
                   </div>
                 )}
                 {showCapsWarning && (
-                  <div className="mt-1 text-xs text-amber-600">Caps Lock is on</div>
+                  <div className="mt-2 flex items-center space-x-2 text-sm text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Caps Lock is on</span>
+                  </div>
                 )}
               </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input type="checkbox" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Remember me</span>
+              </label>
+              <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+                Forgot password?
+              </Link>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold text-sm hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:hover:scale-100"
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                'Sign In'
+              )}
             </button>
-          <div className="relative">
-            <div className="flex items-center gap-2 py-2 text-xs text-gray-500">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span>OR CONTINUE WITH</span>
-              <div className="flex-1 h-px bg-gray-200" />
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
             </div>
-            <button
-              type="button"
-              onClick={async () => {
-                await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
-              }}
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 text-black dark:border-gray-600 dark:hover:bg-gray-600 hover:bg-gray-50"
-            >
-              <GoogleIcon className="h-4 w-4" /> Sign in with Google
-            </button>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 font-medium">Or continue with</span>
+            </div>
           </div>
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Don’t have an account yet? <Link to="/signup" className="text-gray-900 font-medium">Create Account</Link>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } });
+            }}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <GoogleIcon className="h-5 w-5" />
+            <span>Sign in with Google</span>
+          </button>
+
+          <div className="text-center pt-4">
+            <span className="text-sm text-gray-600 dark:text-gray-400">Don't have an account? </span>
+            <Link 
+              to="/signup" 
+              className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200"
+            >
+              Create one now
+            </Link>
           </div>
       </form>
     </AuthLayout>

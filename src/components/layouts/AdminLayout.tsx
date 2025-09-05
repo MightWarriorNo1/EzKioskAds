@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationToast from '../NotificationToast';
 import Logo from '../shared/Logo';
+import ThemeToggle from '../shared/ThemeToggle';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: BarChart3 },
@@ -38,7 +39,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <NotificationToast />
       
       {/* Sidebar */}
@@ -149,6 +150,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <ThemeToggle variant="dropdown" size="md" />
+              
               {/* Notifications */}
               <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative">
                 <Bell className="h-5 w-5" />

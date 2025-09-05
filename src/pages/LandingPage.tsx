@@ -1,17 +1,30 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, MapPin, Clock, Upload, Check, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { MapPin, Clock, Upload, Check, Star } from 'lucide-react';
 import SiteHeader from '../components/layouts/SiteHeader';
 
 export default function LandingPage() {
+  const location = useLocation();
+  const [isPricingHighlighted, setIsPricingHighlighted] = useState(false);
+
+  useEffect(() => {
+    if (location.hash === '#pricing') {
+      setIsPricingHighlighted(true);
+      // Remove highlight after 3 seconds
+      const timer = setTimeout(() => {
+        setIsPricingHighlighted(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.hash]);
+
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))]">
+    <div className="min-h-screen bg-[rgb(var(--bg))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       {/* Header */}
       <SiteHeader />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900" />
         <div className="max-w-7xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
           <div>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-gray-800 dark:text-primary-300 mb-4">
@@ -25,6 +38,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link to="/signin" className="btn-primary px-6 py-3">Get started</Link>
+              <Link to="/custom-ads" className="btn-secondary px-6 py-3">Custom Ads</Link>
               <Link to="/kiosks" className="btn-secondary px-6 py-3">Learn more</Link>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-300">
@@ -45,29 +59,69 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Custom Ads Section */}
+      <section className="px-6 py-20">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">Need Professional Ad Creation?</h2>
+          <p className="text-xl mb-8 max-w-3xl mx-auto  text-black dark:text-white/90">
+            Our expert team can create stunning vertical ads for you. Choose from graphic design, 
+            custom photography, or professional videography services.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-white/20  text-black dark:text-white/90 flex items-center justify-center mx-auto mb-4">
+                <Upload className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2  text-black dark:text-white">Graphic Design</h3>
+              <p className="text-sm  text-black dark:text-white/80 mb-3">Using your assets</p>
+              <div className="text-2xl font-bold  text-black dark:text-white">$125</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-white/20  text-black dark:text-white flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2  text-black dark:text-white">Photography</h3>
+              <p className="text-sm  text-black dark:text-white/80 mb-3">Custom photo session</p>
+              <div className="text-2xl font-bold  text-black dark:text-white">$199</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-white/20  text-black dark:text-white flex items-center justify-center mx-auto mb-4">
+                <Check className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2  text-black dark:text-white">Videography</h3>
+              <p className="text-sm  text-black dark:text-white/80 mb-3">Professional video</p>
+              <div className="text-2xl font-bold  text-black dark:text-white">$399</div>
+            </div>
+          </div>
+          <Link to="/custom-ads" className="btn-primary px-8 py-3">
+            Get Custom Ads
+          </Link>
+        </div>
+      </section>
+
       {/* How It Works Section */}
-      <section className="px-6 py-20 bg-[rgb(var(--surface))] dark:bg-gray-900">
+      <section className="px-6 py-20">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How it works</h2>
-          <p className="text-xl mb-16 max-w-3xl mx-auto">
+          <p className="text-xl mb-16 max-w-3xl mx-auto  text-black dark:text-white/90">
             Get your ads in front of customers in just a few simple steps.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center  text-black dark:text-white/90">
               <div className="w-16 h-16 rounded-full bg-primary-50 text-primary-700 dark:bg-gray-800 dark:text-primary-300 flex items-center justify-center mx-auto mb-6">
                 <MapPin className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-semibold mb-2">1. Select locations</h3>
               <p>Choose from our network of kiosks in high‑traffic areas.</p>
             </div>
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center  text-black dark:text-white/90">
               <div className="w-16 h-16 rounded-full bg-primary-50 text-primary-700 dark:bg-gray-800 dark:text-primary-300 flex items-center justify-center mx-auto mb-6">
                 <Clock className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-semibold mb-2">2. Set duration</h3>
               <p>Choose your ad slot duration and campaign length.</p>
             </div>
-            <div className="card p-8 text-center">
+              <div className="card p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-primary-50 text-primary-700 dark:bg-gray-800 dark:text-primary-300 flex items-center justify-center mx-auto mb-6">
                 <Upload className="h-8 w-8" />
               </div>
@@ -79,14 +133,17 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="px-6 py-20">
+      <section 
+        id="pricing" 
+        className={"px-6 py-20 transition-all duration-1000"}
+      >
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-          <p className="text-xl mb-16 max-w-3xl mx-auto">
+          <p className="text-xl mb-16 max-w-3xl mx-auto  text-black dark:text-white/90">
             Pay only for what you need. No hidden fees.
           </p>
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center  text-black dark:text-white">
               <h3 className="text-2xl font-bold mb-4">High‑traffic kiosk</h3>
               <div className="text-3xl font-extrabold mb-6">$90 per week</div>
               <div className="space-y-3">
@@ -104,7 +161,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center  text-black dark:text-white/90">
               <h3 className="text-2xl font-bold mb-4">Medium‑traffic kiosk</h3>
               <div className="text-3xl font-extrabold mb-6">$50 per week</div>
               <div className="space-y-3">
@@ -122,7 +179,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center  text-black dark:text-white/90">
               <h3 className="text-2xl font-bold mb-4">Low‑traffic kiosk</h3>
               <div className="text-3xl font-extrabold mb-6">$40 per week</div>
               <div className="space-y-3">
@@ -151,7 +208,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="px-6 py-20 bg-primary-600 text-white">
+      <section className="px-6 py-20 bg-primary-600 text-white dark:bg-primary-600 dark:text-white">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to reach more customers?</h2>
           <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">

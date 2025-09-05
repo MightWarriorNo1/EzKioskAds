@@ -25,7 +25,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))]">
+    <div className="min-h-screen bg-[rgb(var(--bg))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <SiteHeader />
 
       <main className="max-w-7xl mx-auto px-6 py-12">

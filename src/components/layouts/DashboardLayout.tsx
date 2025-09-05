@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../shared/Logo';
+import ThemeToggle from '../shared/ThemeToggle';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -56,14 +57,9 @@ export default function DashboardLayout({
   };
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const toggleTheme = () => {
-    const root = document.documentElement;
-    const isDark = root.classList.toggle('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  };
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 flex">
       {/* Left Sidebar - Fixed */}
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
@@ -128,20 +124,7 @@ export default function DashboardLayout({
             <div className="hidden md:block text-sm text-gray-500 dark:text-gray-400">Dashboard</div>
           )}
           <div className="flex-1" />
-          <button onClick={toggleTheme} aria-label="Toggle theme" className="btn-secondary">
-            <span className="hidden md:inline">Theme</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 ml-2">
-              <path d="M12 3v1" />
-              <path d="M12 20v1" />
-              <path d="M3 12h1" />
-              <path d="M20 12h1" />
-              <path d="M18.364 5.636l-.707.707" />
-              <path d="M6.343 17.657l-.707.707" />
-              <path d="M5.636 5.636l.707.707" />
-              <path d="M17.657 17.657l.707.707" />
-              <path d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-            </svg>
-          </button>
+          <ThemeToggle variant="dropdown" size="md" />
         </div>
 
         {/* Page Content */}

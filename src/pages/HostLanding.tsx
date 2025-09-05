@@ -3,7 +3,7 @@ import SiteHeader from '../components/layouts/SiteHeader';
 
 export default function HostLanding() {
   return (
-    <div className="min-h-screen bg-[rgb(var(--bg))]">
+    <div className="min-h-screen bg-[rgb(var(--bg))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <SiteHeader />
 
       {/* Hero */}

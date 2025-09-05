@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import NotificationToast from '../NotificationToast';
 import NotificationDropdown from '../shared/NotificationDropdown';
 import Logo from '../shared/Logo';
+import ThemeToggle from '../shared/ThemeToggle';
 
 const navigation = [
   { name: 'Dashboard', href: '/client', icon: BarChart3 },
@@ -37,7 +38,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <NotificationToast />
       
       {/* Sidebar */}
@@ -161,6 +162,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <ThemeToggle variant="dropdown" size="md" />
+              
               {/* Notifications */}
               <NotificationDropdown />
               

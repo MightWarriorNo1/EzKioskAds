@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import LandingPage from './pages/LandingPage';
 import HostLanding from './pages/HostLanding';
 import KiosksPage from './pages/KiosksPage';
+import CustomAdsPage from './pages/CustomAdsPage';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import ContactPage from './pages/ContactPage';
@@ -19,15 +21,17 @@ import ProtectedRoute from './components/ProtectedRoute';
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <Router>
             <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gray-900">
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/custom-ads" element={<CustomAdsPage />} />
                 <Route path="/hosting" element={<HostLanding />} />
                 <Route path="/kiosks" element={<KiosksPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
@@ -59,9 +63,10 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-          </Router>
-        </NotificationProvider>
-      </AuthProvider>
+            </Router>
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

@@ -13,7 +13,7 @@ export default function Card({ title, subtitle, actions, className = '', childre
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <div>
             {title && <h3 className="text-base font-semibold">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-gray-500 dark:text-white">{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
