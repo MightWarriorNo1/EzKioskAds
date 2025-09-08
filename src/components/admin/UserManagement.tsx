@@ -1,200 +1,129 @@
-import React, { useState } from 'react';
-import { Users, Search, Filter, Edit, Trash2, Plus, Mail, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Search, Filter, Edit, Trash2, Plus, Mail, Shield, Download, Upload, RefreshCw, FileText, X } from 'lucide-react';
+import { useNotification } from '../../contexts/NotificationContext';
+import { AdminService } from '../../services/adminService';
+import { supabase } from '../../lib/supabaseClient';
 
 interface User {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   role: 'client' | 'host' | 'admin';
-  status: 'active' | 'inactive' | 'suspended';
-  joinDate: string;
-  lastLogin: string;
-  totalSpent?: number;
-  totalEarned?: number;
+  company_name?: string;
+  subscription_tier: 'free' | 'basic' | 'premium' | 'enterprise';
+  created_at: string;
+  updated_at: string;
+  avatar_url?: string;
+  stripe_customer_id?: string;
 }
 
 export default function UserManagement() {
-  const [users] = useState<User[]>([
-    {
-      id: '1',
-      name: 'John Client',
-      email: 'john@techcorp.com',
-      role: 'client',
-      status: 'active',
-      joinDate: '2024-06-15',
-      lastLogin: '2025-01-20',
-      totalSpent: 15600
-    },
-    {
-      id: '2',
-      name: 'Sarah Host',
-      email: 'sarah@hostnetwork.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-03-22',
-      lastLogin: '2025-01-20',
-      totalEarned: 28500
-    },
-    {
-      id: '3',
-      name: 'Mike Admin',
-      email: 'mike@adflow.com',
-      role: 'admin',
-      status: 'active',
-      joinDate: '2024-01-10',
-      lastLogin: '2025-01-20'
-    },
-    {
-      id: '4',
-      name: 'Emily Designer',
-      email: 'emily@fashionforward.com',
-      role: 'client',
-      status: 'active',
-      joinDate: '2024-08-20',
-      lastLogin: '2025-01-19',
-      totalSpent: 8900
-    },
-    {
-      id: '5',
-      name: 'David Campus',
-      email: 'david@campusmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-05-12',
-      lastLogin: '2025-01-18',
-      totalEarned: 18900
-    },
-    {
-      id: '6',
-      name: 'Lisa Retail',
-      email: 'lisa@retailmax.com',
-      role: 'client',
-      status: 'active',
-      joinDate: '2024-09-05',
-      lastLogin: '2025-01-17',
-      totalSpent: 12400
-    },
-    {
-      id: '7',
-      name: 'Tom Urban',
-      email: 'tom@urbandisplays.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-04-18',
-      lastLogin: '2025-01-16',
-      totalEarned: 22100
-    },
-    {
-      id: '8',
-      name: 'Anna Event',
-      email: 'anna@eventmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-07-03',
-      lastLogin: '2025-01-15',
-      totalEarned: 15600
-    },
-    {
-      id: '9',
-      name: 'Chris City',
-      email: 'chris@citydisplays.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-06-28',
-      lastLogin: '2025-01-14',
-      totalEarned: 18200
-    },
-    {
-      id: '10',
-      name: 'Maria Sports',
-      email: 'maria@sportsmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-05-15',
-      lastLogin: '2025-01-13',
-      totalEarned: 13400
-    },
-    {
-      id: '11',
-      name: 'James Entertainment',
-      email: 'james@entertainmentmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-08-10',
-      lastLogin: '2025-01-12',
-      totalEarned: 16800
-    },
-    {
-      id: '12',
-      name: 'Rachel Auto',
-      email: 'rachel@automedia.com',
-      role: 'host',
-      status: 'inactive',
-      joinDate: '2024-03-05',
-      lastLogin: '2024-12-15',
-      totalEarned: 8900
-    },
-    {
-      id: '13',
-      name: 'Kevin Travel',
-      email: 'kevin@travelmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-09-22',
-      lastLogin: '2025-01-11',
-      totalEarned: 24500
-    },
-    {
-      id: '14',
-      name: 'Samantha Health',
-      email: 'samantha@healthmedia.com',
-      role: 'host',
-      status: 'active',
-      joinDate: '2024-07-18',
-      lastLogin: '2025-01-10',
-      totalEarned: 11200
-    },
-    {
-      id: '15',
-      name: 'Alex Public',
-      email: 'alex@publicmedia.com',
-      role: 'host',
-      status: 'suspended',
-      joinDate: '2024-04-30',
-      lastLogin: '2024-12-20',
-      totalEarned: 7600
-    }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { addNotification } = useNotification();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-  const getRoleColor = (role: User['role']) => {
-    switch (role) {
-      case 'client': return 'bg-blue-100 text-blue-800';
-      case 'host': return 'bg-green-100 text-green-800';
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      addNotification('error', 'Error', 'Failed to load users');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status: User['status']) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const exportUsers = async () => {
+    try {
+      const csvData = await AdminService.exportUsers();
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      addNotification('success', 'Export Complete', 'Users have been exported to CSV');
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      addNotification('error', 'Error', 'Failed to export users');
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      setImportFile(file);
+    } else {
+      addNotification('error', 'Invalid File', 'Please select a CSV file');
+    }
+  };
+
+  const importUsers = async () => {
+    if (!importFile) return;
+
+    try {
+      setImporting(true);
+      const text = await importFile.text();
+      const result = await AdminService.importUsers(text);
+      
+      addNotification(
+        'success', 
+        'Import Complete', 
+        `Successfully imported ${result.success} users. ${result.errors.length} errors occurred.`
+      );
+
+      if (result.errors.length > 0) {
+        console.log('Import errors:', result.errors);
+      }
+
+      setShowImportModal(false);
+      setImportFile(null);
+      loadUsers();
+    } catch (error) {
+      console.error('Error importing users:', error);
+      addNotification('error', 'Error', 'Failed to import users');
+    } finally {
+      setImporting(false);
     }
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = 
+      user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.company_name && user.company_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+    
+    return matchesSearch && matchesRole;
   });
+
+  const stats = {
+    total: users.length,
+    clients: users.filter(u => u.role === 'client').length,
+    hosts: users.filter(u => u.role === 'host').length,
+    admins: users.filter(u => u.role === 'admin').length
+  };
 
   return (
     <div className="space-y-6">
@@ -202,21 +131,41 @@ export default function UserManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage clients, hosts, and administrators</p>
+          <p className="text-gray-600 mt-2">Manage clients, hosts, and admins with CSV import/export functionality</p>
         </div>
-        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Add User</span>
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={loadUsers}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={exportUsers}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Upload className="h-4 w-4" />
+            <span>Import CSV</span>
+          </button>
+        </div>
       </div>
 
-      {/* User Stats */}
+      {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{users.length}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.total}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
               <Users className="h-6 w-6 text-purple-600" />
@@ -228,7 +177,7 @@ export default function UserManagement() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Clients</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{users.filter(u => u.role === 'client').length}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.clients}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg">
               <Users className="h-6 w-6 text-blue-600" />
@@ -240,10 +189,10 @@ export default function UserManagement() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Hosts</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{users.filter(u => u.role === 'host').length}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.hosts}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
-              <Users className="h-6 w-6 text-green-600" />
+              <Shield className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </div>
@@ -251,50 +200,41 @@ export default function UserManagement() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Today</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{users.filter(u => u.status === 'active').length}</p>
+              <p className="text-sm font-medium text-gray-600">Admins</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.admins}</p>
             </div>
-            <div className="p-3 bg-emerald-50 rounded-lg">
-              <Shield className="h-6 w-6 text-emerald-600" />
+            <div className="p-3 bg-red-50 rounded-lg">
+              <Shield className="h-6 w-6 text-red-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-64">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-5 w-5 text-gray-400" />
+          <div>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Roles</option>
               <option value="client">Clients</option>
               <option value="host">Hosts</option>
               <option value="admin">Admins</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
             </select>
           </div>
         </div>
@@ -302,69 +242,188 @@ export default function UserManagement() {
 
       {/* Users Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      Joined: {new Date(user.joinDate).toLocaleDateString()}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Last login: {new Date(user.lastLogin).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {user.totalSpent && `$${user.totalSpent.toLocaleString()} spent`}
-                    {user.totalEarned && `$${user.totalEarned.toLocaleString()} earned`}
-                    {!user.totalSpent && !user.totalEarned && '-'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="text-purple-600 hover:text-purple-800">
-                        <Mail className="h-4 w-4" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-800">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Users</h3>
         </div>
+        
+        {loading ? (
+          <div className="p-6 text-center">
+            <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">Loading users...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-6 text-center">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+            <p className="text-gray-500">No users match your current filters.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Subscription
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Joined
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {user.avatar_url ? (
+                            <img 
+                              src={user.avatar_url} 
+                              alt={user.full_name}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center">
+                              <span className="text-white font-medium text-sm">
+                                {user.full_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                          {user.company_name && (
+                            <div className="text-sm text-gray-500">{user.company_name}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                        user.role === 'host' ? 'bg-green-100 text-green-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.subscription_tier === 'enterprise' ? 'bg-purple-100 text-purple-800' :
+                        user.subscription_tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+                        user.subscription_tier === 'basic' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.subscription_tier}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button className="text-blue-600 hover:text-blue-900">
+                          <Mail className="h-4 w-4" />
+                        </button>
+                        <button className="text-purple-600 hover:text-purple-900">
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button className="text-red-600 hover:text-red-900">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Import Users</h3>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFile(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                {importFile && (
+                  <div className="mt-2 flex items-center space-x-2 text-sm text-green-600">
+                    <FileText className="h-4 w-4" />
+                    <span>{importFile.name}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">CSV Format</h4>
+                <p className="text-xs text-blue-800">
+                  Required columns: email, full_name, role, company_name (optional), subscription_tier (optional)
+                </p>
+                <p className="text-xs text-blue-800 mt-1">
+                  Roles: client, host, admin | Tiers: free, basic, premium, enterprise
+                </p>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setImportFile(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={importUsers}
+                  disabled={!importFile || importing}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {importing ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span>{importing ? 'Importing...' : 'Import'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

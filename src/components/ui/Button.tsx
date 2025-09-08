@@ -8,6 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  loading?: boolean;
 }
 
 const variantClass: Record<ButtonVariant, string> = {
@@ -29,12 +30,15 @@ export default function Button({
   leftIcon,
   rightIcon,
   className = '',
+  loading = false,
   children,
   ...props
 }: ButtonProps) {
   const classes = `${variantClass[variant]} ${sizeClass[size]} inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`.trim();
+  const { disabled, ...restProps } = props;
+  const isDisabled = Boolean(disabled) || Boolean(loading);
   return (
-    <button className={classes} {...props}>
+    <button className={classes} {...restProps} aria-busy={loading} disabled={isDisabled}>
       {leftIcon && <span className="mr-2 flex items-center">{leftIcon}</span>}
       {children}
       {rightIcon && <span className="ml-2 flex items-center">{rightIcon}</span>}

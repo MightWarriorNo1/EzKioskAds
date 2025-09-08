@@ -435,6 +435,56 @@ export interface Database {
           updated_at?: string;
         };
       };
+      custom_ad_orders: {
+        Row: {
+          id: string;
+          user_id: string;
+          service_key: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          address: string;
+          details: string;
+          files: Array<{ name: string; url: string; size: number; type: string }>;
+          total_amount: number;
+          payment_status: 'pending' | 'succeeded' | 'failed';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          service_key: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          address: string;
+          details: string;
+          files?: Array<{ name: string; url: string; size: number; type: string }>;
+          total_amount: number;
+          payment_status?: 'pending' | 'succeeded' | 'failed';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          service_key?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+          phone?: string;
+          address?: string;
+          details?: string;
+          files?: Array<{ name: string; url: string; size: number; type: string }>;
+          total_amount?: number;
+          payment_status?: 'pending' | 'succeeded' | 'failed';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       analytics_events: {
         Row: {
           id: string;

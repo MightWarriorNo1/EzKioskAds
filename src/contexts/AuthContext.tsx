@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
@@ -21,9 +21,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function mapSupabaseUserToUser(supabaseUser: SupabaseUser): User {
+async function mapSupabaseUserToUser(supabaseUser: SupabaseUser): Promise<User> {
   const metadata = (supabaseUser.user_metadata ?? {}) as Record<string, unknown> & { role?: UserRole; name?: string; avatar?: string };
-  const role = (metadata.role as UserRole) ?? 'client';
+  let role: UserRole = (metadata.role as UserRole) ?? 'client';
+
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', supabaseUser.id)
+      .single();
+    
+    if (!error && profile && (profile as any).role) {
+      role = (profile as any).role as UserRole;
+    } else if (error && error.code === 'PGRST116') {
+      // Profile doesn't exist, create one
+      console.log('Profile not found, creating new profile for user:', supabaseUser.id);
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          full_name: metadata.name || 'Unknown',
+          role: role,
+        });
+      
+      if (insertError) {
+        console.error('Failed to create profile:', insertError);
+      }
+    }
+  } catch (e) {
+    console.error('Profile lookup error:', e);
+    // Fallback to metadata role if profile lookup fails
+  }
+
   return {
     id: supabaseUser.id,
     email: supabaseUser.email ?? '',
@@ -44,17 +75,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.auth.getSession();
       const session = data.session as Session | null;
       if (isMounted && session?.user) {
-        setUser(mapSupabaseUserToUser(session.user));
+        const u = await mapSupabaseUserToUser(session.user);
+        if (isMounted) setUser(u);
       }
       if (isMounted) setIsLoading(false);
     };
 
     initialize();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return;
       if (session?.user) {
-        setUser(mapSupabaseUserToUser(session.user));
+        const u = await mapSupabaseUserToUser(session.user);
+        if (isMounted) setUser(u);
       } else {
         setUser(null);
       }
@@ -68,9 +101,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase auth error:', error);
+      throw error;
+    }
     if (data.user) {
-      setUser(mapSupabaseUserToUser(data.user));
+      try {
+        const u = await mapSupabaseUserToUser(data.user);
+        setUser(u);
+      } catch (profileError) {
+        console.error('Profile mapping error:', profileError);
+        // Still set user even if profile mapping fails
+        setUser({
+          id: data.user.id,
+          email: data.user.email ?? '',
+          role: 'client',
+        });
+      }
     }
   };
 

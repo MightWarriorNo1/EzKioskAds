@@ -1,15 +1,14 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Plus, 
-  BarChart3, 
-  FileText, 
-  User, 
-  HelpCircle, 
+import {
+  LayoutDashboard,
+  Plus,
+  BarChart3,
+  FileText,
+  User,
+  HelpCircle,
   LogOut,
-  Target,
-  RefreshCw
+  Target
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../shared/Logo';
@@ -22,11 +21,10 @@ interface DashboardLayoutProps {
   showBreadcrumb?: boolean;
 }
 
-export default function DashboardLayout({ 
-  children, 
-  title, 
-  subtitle, 
-  showBreadcrumb = true 
+export default function DashboardLayout({
+  children,
+  title,
+  subtitle
 }: DashboardLayoutProps) {
   const location = useLocation();
   const { signOut } = useAuth();
@@ -59,26 +57,17 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 flex">
+    <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 flex pt-16">
       {/* Left Sidebar - Fixed */}
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed left-0 right-0 top-16 bottom-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
-      
+
       {/* Sidebar - Always fixed on left */}
-      <div className={`fixed left-0 top-0 h-full w-72 bg-white/90 dark:bg-gray-900/80 backdrop-blur border-r border-gray-200 dark:border-gray-800 flex flex-col z-50 transform transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-72 bg-white/90 dark:bg-gray-900/80 backdrop-blur border-r border-gray-200 dark:border-gray-800 flex flex-col z-50 transform transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <Link to="/" className="hover:opacity-90 transition-opacity">
-            <Logo 
-              size="xl" 
-              showText={true} 
-              textClassName="text-3xl font-bold" 
-              variant="dark"
-            />
-          </Link>
-        </div>
+
 
         {/* Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
@@ -89,11 +78,10 @@ export default function DashboardLayout({
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(item.href)
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href)
                       ? 'bg-primary-50 text-primary-700 dark:bg-gray-800 dark:text-primary-300'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-5 w-5" />
                   <span>{item.name}</span>
@@ -118,13 +106,20 @@ export default function DashboardLayout({
       {/* Main Content - With left margin to account for fixed sidebar */}
       <div className="flex-1 flex flex-col lg:ml-72">
         {/* Header */}
-        <div className="bg-white/70 dark:bg-gray-900/60 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 md:px-8 py-3 flex items-center justify-between">
+        <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/70 dark:bg-gray-900/60 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 md:px-8 flex items-center justify-between">
           <button className="lg:hidden btn-secondary" onClick={() => setMobileOpen(v => !v)}>
             Menu
           </button>
-          {showBreadcrumb && (
-            <div className="hidden md:block text-sm text-gray-500 dark:text-gray-400">Dashboard</div>
-          )}
+          <div className="flex items-center">
+            <Link to="/" className="hover:opacity-90 transition-opacity">
+              <Logo
+                size="xl"
+                showText={true}
+                textClassName="text-3xl font-bold"
+                variant="dark"
+              />
+            </Link>
+          </div>
           <div className="flex-1" />
           <ThemeToggle variant="dropdown" size="md" />
         </div>

@@ -11,12 +11,12 @@ export default function Input({ label, error, hint, className = '', id, ...props
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-white mb-1">
           {label}
         </label>
       )}
       <input id={inputId} className="input" {...props} />
-      {hint && !error && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
+      {hint && !error && <p className="mt-1 text-xs text-gray-500 dark:text-white">{hint}</p>}
       {error && <p className="mt-1 text-xs text-danger-600">{error}</p>}
     </div>
   );

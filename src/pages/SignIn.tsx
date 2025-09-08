@@ -55,16 +55,43 @@ export default function SignIn() {
     try {
       await signIn(email, password);
 
-      // Determine redirect based on Supabase user metadata role
-      const { data } = await supabase.auth.getUser();
-      const role = (data.user?.user_metadata?.role as string) || 'client';
+      // Determine redirect based on role from profiles table
+      const { data: userRes } = await supabase.auth.getUser();
+      const userId = userRes.user?.id;
+      let role: string = 'client';
+      if (userId) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        if (!profileError && profile && (profile as any).role) {
+          role = (profile as any).role as string;
+        }
+      }
+
       if (role === 'admin') navigate('/admin');
       else if (role === 'host') navigate('/host');
       else navigate('/client');
       
       addNotification('success', 'Welcome!', 'Successfully signed in to your account.');
-    } catch (error) {
-      addNotification('error', 'Sign In Failed', 'Invalid email or password. Please try again.');
+    } catch (error: any) {
+      console.error('Sign-in error:', error);
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      if (error?.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link before signing in.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Too many sign-in attempts. Please wait a moment and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      addNotification('error', 'Sign In Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

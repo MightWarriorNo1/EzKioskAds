@@ -214,4 +214,74 @@ CREATE TRIGGER set_subscriptions_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- Final verification
+-- Custom ad orders table for Custom Ads Page submissions
+CREATE TABLE IF NOT EXISTS public.custom_ad_orders (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  service_key TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  address TEXT NOT NULL,
+  details TEXT NOT NULL,
+  files JSONB NOT NULL DEFAULT '[]',
+  total_amount DECIMAL(10,2) NOT NULL,
+  payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending','succeeded','failed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Enable RLS and policies for custom_ad_orders
+ALTER TABLE public.custom_ad_orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own custom ad orders" ON public.custom_ad_orders;
+CREATE POLICY "Users can view own custom ad orders" ON public.custom_ad_orders
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own custom ad orders" ON public.custom_ad_orders;
+CREATE POLICY "Users can insert own custom ad orders" ON public.custom_ad_orders
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own custom ad orders" ON public.custom_ad_orders;
+CREATE POLICY "Users can update own custom ad orders" ON public.custom_ad_orders
+  FOR UPDATE USING (user_id = auth.uid());
+
+-- Storage bucket for custom ad uploads
+INSERT INTO storage.buckets (id, name, public) VALUES
+('custom-ad-uploads', 'custom-ad-uploads', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies for custom ad uploads
+DROP POLICY IF EXISTS "Custom ad uploads are publicly accessible" ON storage.objects;
+CREATE POLICY "Custom ad uploads are publicly accessible" ON storage.objects
+  FOR SELECT USING (bucket_id = 'custom-ad-uploads');
+
+DROP POLICY IF EXISTS "Users can upload their own custom ad files" ON storage.objects;
+CREATE POLICY "Users can upload their own custom ad files" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'custom-ad-uploads' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+DROP POLICY IF EXISTS "Users can update their own custom ad files" ON storage.objects;
+CREATE POLICY "Users can update their own custom ad files" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'custom-ad-uploads' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+DROP POLICY IF EXISTS "Users can delete their own custom ad files" ON storage.objects;
+CREATE POLICY "Users can delete their own custom ad files" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'custom-ad-uploads' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- updated_at trigger for custom_ad_orders
+DROP TRIGGER IF EXISTS set_custom_ad_orders_updated_at ON public.custom_ad_orders;
+CREATE TRIGGER set_custom_ad_orders_updated_at
+  BEFORE UPDATE ON public.custom_ad_orders
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
 SELECT 'Migration completed successfully' as status;

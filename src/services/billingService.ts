@@ -33,6 +33,32 @@ export interface PaymentHistory {
 }
 
 export class BillingService {
+  static async createPaymentIntent(params: { amount: number; currency?: string; metadata?: Record<string, string>; recaptchaToken?: string }): Promise<{ clientSecret: string } | null> {
+    try {
+      const requestBody: Record<string, unknown> = {
+        amount: Math.round(params.amount),
+        currency: params.currency || 'usd',
+        metadata: params.metadata,
+      };
+      if (params.recaptchaToken) {
+        requestBody.recaptchaToken = params.recaptchaToken;
+        requestBody.captchaRequired = true;
+      }
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: requestBody,
+      });
+
+      if (error) {
+        console.error('Failed to create payment intent', error);
+        return null;
+      }
+
+      return { clientSecret: (data as any)?.clientSecret };
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      return null;
+    }
+  }
   static async getActiveCampaigns(userId: string): Promise<BillingCampaign[]> {
     try {
       const { data, error } = await supabase

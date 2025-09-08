@@ -68,7 +68,7 @@ export default function LeafletMap({
 
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative h-full w-full ${className}`}>
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-[1000] bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 space-y-2 border border-gray-200 dark:border-gray-700">
         <button

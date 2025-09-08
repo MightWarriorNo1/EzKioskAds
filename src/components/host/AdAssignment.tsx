@@ -1,268 +1,393 @@
-import React, { useState } from 'react';
-import { Calendar, MapPin, Play, Pause, Edit, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, MapPin, Play, Pause, Edit, BarChart3, Plus, Eye, Clock, CheckCircle, X, Upload } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-
-interface AdAssignment {
-  id: string;
-  adName: string;
-  kioskName: string;
-  startDate: string;
-  endDate: string;
-  status: 'active' | 'scheduled' | 'paused';
-  impressions: number;
-}
+import { HostService, HostAdAssignment, HostAd, HostKiosk } from '../../services/hostService';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 export default function AdAssignment() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { addNotification } = useNotification();
-  const [assignments, setAssignments] = useState<AdAssignment[]>([
-    {
-      id: '1',
-      adName: 'Summer Sale 2025',
-      kioskName: 'Mall Entrance A',
-      startDate: '2025-01-15',
-      endDate: '2025-02-15',
-      status: 'active',
-      impressions: 12500
-    },
-    {
-      id: '2',
-      adName: 'Holiday Promotion',
-      kioskName: 'Food Court Central',
-      startDate: '2025-02-01',
-      endDate: '2025-02-28',
-      status: 'scheduled',
-      impressions: 0
-    },
-    {
-      id: '3',
-      adName: 'Product Launch Video',
-      kioskName: 'Train Station Display',
-      startDate: '2025-01-10',
-      endDate: '2025-01-31',
-      status: 'paused',
-      impressions: 8900
-    },
-    {
-      id: '4',
-      adName: 'Back to School Campaign',
-      kioskName: 'University Campus Center',
-      startDate: '2025-01-20',
-      endDate: '2025-03-20',
-      status: 'active',
-      impressions: 18750
-    },
-    {
-      id: '5',
-      adName: 'Spring Collection Preview',
-      kioskName: 'Fashion District Hub',
-      startDate: '2025-02-15',
-      endDate: '2025-04-15',
-      status: 'scheduled',
-      impressions: 0
-    },
-    {
-      id: '6',
-      adName: 'Tech Conference Promo',
-      kioskName: 'Convention Center Lobby',
-      startDate: '2025-01-05',
-      endDate: '2025-01-25',
-      status: 'paused',
-      impressions: 15600
-    },
-    {
-      id: '7',
-      adName: 'Restaurant Week Special',
-      kioskName: 'Downtown Food Court',
-      startDate: '2025-01-25',
-      endDate: '2025-02-08',
-      status: 'active',
-      impressions: 9200
-    },
-    {
-      id: '8',
-      adName: 'Fitness Center Membership',
-      kioskName: 'Sports Complex Entrance',
-      startDate: '2025-02-10',
-      endDate: '2025-03-10',
-      status: 'scheduled',
-      impressions: 0
-    },
-    {
-      id: '9',
-      adName: 'Movie Theater Premiere',
-      kioskName: 'Cinema Multiplex',
-      startDate: '2025-01-12',
-      endDate: '2025-01-26',
-      status: 'active',
-      impressions: 13400
-    },
-    {
-      id: '10',
-      adName: 'Car Dealership Event',
-      kioskName: 'Auto Mall Display',
-      startDate: '2025-02-20',
-      endDate: '2025-03-20',
-      status: 'scheduled',
-      impressions: 0
-    }
-  ]);
+  const [assignments, setAssignments] = useState<HostAdAssignment[]>([]);
+  const [ads, setAds] = useState<HostAd[]>([]);
+  const [kiosks, setKiosks] = useState<HostKiosk[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewAssignment, setShowNewAssignment] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<HostAdAssignment | null>(null);
+  const [newAssignment, setNewAssignment] = useState({
+    adId: '',
+    kioskId: '',
+    startDate: '',
+    endDate: '',
+    priority: 1
+  });
 
-  const getStatusColor = (status: AdAssignment['status']) => {
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const [assignmentsData, adsData, kiosksData] = await Promise.all([
+          HostService.getHostAdAssignments(user.id),
+          HostService.getHostAds(user.id),
+          HostService.getHostKiosks(user.id)
+        ]);
+
+        setAssignments(assignmentsData);
+        setAds(adsData.filter(ad => ad.status === 'approved'));
+        setKiosks(kiosksData.filter(k => k.kiosk.status === 'active'));
+      } catch (error) {
+        console.error('Error loading assignment data:', error);
+        addNotification('error', 'Error', 'Failed to load assignment data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id, addNotification]);
+
+  const handleCreateAssignment = async () => {
+    if (!user?.id || !newAssignment.adId || !newAssignment.kioskId || !newAssignment.startDate || !newAssignment.endDate) {
+      addNotification('error', 'Validation Error', 'Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const assignment = await HostService.createAdAssignment({
+        hostId: user.id,
+        adId: newAssignment.adId,
+        kioskId: newAssignment.kioskId,
+        startDate: newAssignment.startDate,
+        endDate: newAssignment.endDate,
+        priority: newAssignment.priority
+      });
+
+      setAssignments(prev => [assignment, ...prev]);
+      setShowNewAssignment(false);
+      setNewAssignment({
+        adId: '',
+        kioskId: '',
+        startDate: '',
+        endDate: '',
+        priority: 1
+      });
+      
+      addNotification('success', 'Assignment Created', 'Ad assignment has been created successfully');
+    } catch (error) {
+      console.error('Error creating assignment:', error);
+      addNotification('error', 'Creation Failed', 'Failed to create ad assignment');
+    }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'approved': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'paused': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
+      case 'completed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
 
-  const handleNewAssignment = () => {
-    addNotification('info', 'New Assignment', 'New ad assignment functionality will be implemented soon');
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active': return <Play className="h-4 w-4" />;
+      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'approved': return <CheckCircle className="h-4 w-4" />;
+      case 'rejected': return <X className="h-4 w-4" />;
+      case 'paused': return <Pause className="h-4 w-4" />;
+      case 'completed': return <CheckCircle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
   };
 
-  const handlePauseAssignment = (assignmentId: string, adName: string) => {
-    setAssignments(prev => prev.map(assignment => 
-      assignment.id === assignmentId 
-        ? { ...assignment, status: 'paused' as const }
-        : assignment
-    ));
-    addNotification('warning', 'Assignment Paused', `Ad "${adName}" has been paused`);
-  };
-
-  const handlePlayAssignment = (assignmentId: string, adName: string) => {
-    setAssignments(prev => prev.map(assignment => 
-      assignment.id === assignmentId 
-        ? { ...assignment, status: 'active' as const }
-        : assignment
-    ));
-    addNotification('success', 'Assignment Activated', `Ad "${adName}" is now active`);
-  };
-
-  const handleEditAssignment = (assignmentId: string, adName: string) => {
-    addNotification('info', 'Edit Assignment', `Edit functionality for "${adName}" will be implemented soon`);
-  };
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Ad Assignment</h1>
+          <p className="mt-2">Loading assignment data...</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ad Assignment</h1>
-          <p className="text-gray-600 mt-2">Assign and schedule ads to your kiosks</p>
+          <h1 className="text-3xl font-bold">Ad Assignment</h1>
+          <p className="mt-2">Assign and schedule ads to your kiosks</p>
         </div>
-        <button 
-          onClick={handleNewAssignment}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          New Assignment
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/host/ads/upload')}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload New Ad
+          </Button>
+          <Button
+            onClick={() => setShowNewAssignment(true)}
+            disabled={ads.length === 0 || kiosks.length === 0}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Assignment
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="grid md:grid-cols-4 gap-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Assignments</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Assignments</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {assignments.filter(a => a.status === 'active').length}
               </p>
             </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <Play className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <Play className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Scheduled</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {assignments.filter(a => a.status === 'scheduled').length}
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Review</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {assignments.filter(a => a.status === 'pending').length}
               </p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <Calendar className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Impressions</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {assignments.reduce((sum, a) => sum + a.impressions, 0).toLocaleString()}
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Available Ads</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {ads.length}
               </p>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-        </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Kiosks</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {kiosks.length}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <MapPin className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </Card>
       </div>
 
+      {/* New Assignment Modal */}
+      {showNewAssignment && (
+        <Card className="p-6">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create New Assignment</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Assign an approved ad to a kiosk</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => setShowNewAssignment(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Ad *
+              </label>
+              <select
+                value={newAssignment.adId}
+                onChange={(e) => setNewAssignment(prev => ({ ...prev, adId: e.target.value }))}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">Choose an ad...</option>
+                {ads.map(ad => (
+                  <option key={ad.id} value={ad.id}>{ad.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Kiosk *
+              </label>
+              <select
+                value={newAssignment.kioskId}
+                onChange={(e) => setNewAssignment(prev => ({ ...prev, kioskId: e.target.value }))}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">Choose a kiosk...</option>
+                {kiosks.map(kiosk => (
+                  <option key={kiosk.id} value={kiosk.kiosk.id}>{kiosk.kiosk.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Start Date *
+              </label>
+              <input
+                type="date"
+                value={newAssignment.startDate}
+                onChange={(e) => setNewAssignment(prev => ({ ...prev, startDate: e.target.value }))}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                End Date *
+              </label>
+              <input
+                type="date"
+                value={newAssignment.endDate}
+                onChange={(e) => setNewAssignment(prev => ({ ...prev, endDate: e.target.value }))}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Priority
+              </label>
+              <select
+                value={newAssignment.priority}
+                onChange={(e) => setNewAssignment(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value={1}>Low (1)</option>
+                <option value={2}>Medium (2)</option>
+                <option value={3}>High (3)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="secondary" onClick={() => setShowNewAssignment(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateAssignment}>
+              Create Assignment
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Assignments Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Current Assignments</h3>
-        </div>
-        
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Current Assignments</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kiosk</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impressions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ad</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kiosk</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Schedule</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {assignments.map((assignment) => (
-                <tr key={assignment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{assignment.adName}</td>
+                <tr key={assignment.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-6 py-4">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{assignment.ad.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {assignment.ad.media_type} • {assignment.ad.duration}s
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">{assignment.kioskName}</span>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{assignment.kiosk.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{assignment.kiosk.city}, {assignment.kiosk.state}</div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {new Date(assignment.startDate).toLocaleDateString()} - {new Date(assignment.endDate).toLocaleDateString()}
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                    <div>
+                      <div>{new Date(assignment.start_date).toLocaleDateString()}</div>
+                      <div className="text-gray-500 dark:text-gray-400">to {new Date(assignment.end_date).toLocaleDateString()}</div>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
-                      {assignment.status}
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
+                      {getStatusIcon(assignment.status)}
+                      <span className="ml-1">{assignment.status}</span>
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{assignment.impressions.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      assignment.priority === 3 ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                      assignment.priority === 2 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                      'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                    }`}>
+                      {assignment.priority === 3 ? 'High' : assignment.priority === 2 ? 'Medium' : 'Low'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
-                      {assignment.status === 'active' ? (
-                        <button 
-                          onClick={() => handlePauseAssignment(assignment.id, assignment.adName)}
-                          className="text-yellow-600 hover:text-yellow-800"
-                        >
-                          <Pause className="h-4 w-4" />
-                        </button>
-                      ) : assignment.status === 'paused' ? (
-                        <button 
-                          onClick={() => handlePlayAssignment(assignment.id, assignment.adName)}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          <Play className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                      <button 
-                        onClick={() => handleEditAssignment(assignment.id, assignment.adName)}
-                        className="text-blue-600 hover:text-blue-800"
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setSelectedAssignment(assignment)}
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          // TODO: Implement edit functionality
+                          addNotification('info', 'Edit Assignment', 'Edit functionality will be implemented soon');
+                        }}
+                        title="Edit Assignment"
                       >
                         <Edit className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -270,7 +395,86 @@ export default function AdAssignment() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
+
+      {/* Assignment Details Modal */}
+      {selectedAssignment && (
+        <Card className="p-6">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Assignment Details</h3>
+              <p className="text-gray-600 dark:text-gray-400">Assignment ID: {selectedAssignment.id}</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => setSelectedAssignment(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-3">Ad Information</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.ad.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Type:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.ad.media_type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Duration:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.ad.duration}s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                  <span className={`text-sm font-medium ${getStatusColor(selectedAssignment.ad.status)}`}>
+                    {selectedAssignment.ad.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-3">Kiosk Information</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.kiosk.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Location:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.kiosk.location}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">City:</span>
+                  <span className="text-sm font-medium">{selectedAssignment.kiosk.city}, {selectedAssignment.kiosk.state}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="font-medium text-gray-900 dark:text-white mb-3">Schedule Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Start Date:</span>
+                <div className="text-sm font-medium">{new Date(selectedAssignment.start_date).toLocaleDateString()}</div>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">End Date:</span>
+                <div className="text-sm font-medium">{new Date(selectedAssignment.end_date).toLocaleDateString()}</div>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Priority:</span>
+                <div className="text-sm font-medium">
+                  {selectedAssignment.priority === 3 ? 'High' : selectedAssignment.priority === 2 ? 'Medium' : 'Low'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

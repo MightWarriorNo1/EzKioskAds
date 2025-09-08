@@ -1,6 +1,9 @@
-import React from 'react';
-import { Monitor, DollarSign, MapPin, TrendingUp, Eye, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Monitor, DollarSign, MapPin, TrendingUp, Eye, Users, Upload, Calendar, AlertCircle } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { HostService, HostStats, HostNotification } from '../../services/hostService';
 import MetricsCard from '../shared/MetricsCard';
 import RecentActivity from '../shared/RecentActivity';
 import QuickActions from '../shared/QuickActions';
@@ -8,42 +11,71 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function HostDashboard() {
+  const navigate = useNavigate();
   const { addNotification } = useNotification();
+  const { user } = useAuth();
+  const [stats, setStats] = useState<HostStats | null>(null);
+  const [notifications, setNotifications] = useState<HostNotification[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const metrics = [
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const [statsData, notificationsData] = await Promise.all([
+          HostService.getHostStats(user.id),
+          HostService.getHostNotifications(user.id, true) // Only unread notifications
+        ]);
+        
+        setStats(statsData);
+        setNotifications(notificationsData);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        addNotification('error', 'Error', 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user?.id, addNotification]);
+
+  const metrics = stats ? [
     {
       title: 'Active Kiosks',
-      value: '15',
-      change: '+3 this month',
+      value: stats.active_kiosks.toString(),
+      change: `${stats.total_kiosks} total`,
       changeType: 'positive' as const,
       icon: Monitor,
       color: 'green' as const
     },
     {
       title: 'Monthly Revenue',
-      value: '$18,750',
-      change: '+22% from last month',
+      value: `$${stats.monthly_revenue.toLocaleString()}`,
+      change: 'This month',
       changeType: 'positive' as const,
       icon: DollarSign,
       color: 'blue' as const
     },
     {
       title: 'Total Impressions',
-      value: '1.2M',
-      change: '+18% from last month',
+      value: stats.total_impressions.toLocaleString(),
+      change: 'All time',
       changeType: 'positive' as const,
       icon: Eye,
       color: 'purple' as const
     },
     {
-      title: 'Avg. Uptime',
-      value: '97.8%',
-      change: '+1.2% from last month',
-      changeType: 'positive' as const,
-      icon: TrendingUp,
-      color: 'orange' as const
+      title: 'Pending Ads',
+      value: stats.pending_ads.toString(),
+      change: 'Awaiting review',
+      changeType: stats.pending_ads > 0 ? 'warning' as const : 'positive' as const,
+      icon: Upload,
+      color: stats.pending_ads > 0 ? 'orange' as const : 'green' as const
     }
-  ];
+  ] : [];
 
   const quickActions = [
     {
@@ -54,38 +86,113 @@ export default function HostDashboard() {
       color: 'green' as const
     },
     {
+      title: 'Upload Ads',
+      description: 'Upload new ads for review',
+      href: '/host/ads/upload',
+      icon: Upload,
+      color: 'blue' as const
+    },
+    {
       title: 'Assign Ads',
       description: 'Schedule ads to specific kiosks',
       href: '/host/ads',
-      icon: MapPin,
-      color: 'blue' as const
+      icon: Calendar,
+      color: 'purple' as const
+    },
+    {
+      title: 'Revenue Dashboard',
+      description: 'View detailed revenue analytics',
+      href: '/host/revenue',
+      icon: TrendingUp,
+      color: 'orange' as const
     }
   ];
 
-  const recentActivities = [
-    { action: 'Kiosk K-011 (Airport Terminal A) came online', time: '30 seconds ago', type: 'success' as const },
-    { action: 'Ad assignment updated for University Campus Center', time: '2 hours ago', type: 'info' as const },
-    { action: 'Weekly payout of $3,250 processed', time: '1 day ago', type: 'success' as const },
-    { action: 'New ad campaign assigned to 12 kiosks', time: '2 days ago', type: 'info' as const },
-    { action: 'Kiosk K-005 (Fashion District Hub) entered maintenance', time: '3 days ago', type: 'warning' as const },
-    { action: 'Monthly revenue target exceeded by 15%', time: '1 week ago', type: 'success' as const }
-  ];
+  const recentActivities = notifications.slice(0, 6).map(notification => ({
+    action: notification.title,
+    time: new Date(notification.created_at).toLocaleString(),
+    type: notification.type === 'ad_approved' || notification.type === 'payout_processed' ? 'success' as const :
+          notification.type === 'ad_rejected' || notification.type === 'kiosk_offline' ? 'warning' as const :
+          'info' as const
+  }));
 
   const handleMetricClick = (metricTitle: string) => {
-    addNotification('info', 'Metric Details', `Detailed view for ${metricTitle} will be displayed`);
+    // Navigate to relevant page based on metric
+    switch (metricTitle) {
+      case 'Active Kiosks':
+        navigate('/host/kiosks');
+        break;
+      case 'Monthly Revenue':
+        navigate('/host/revenue');
+        break;
+      case 'Total Impressions':
+        navigate('/host/revenue');
+        break;
+      case 'Pending Ads':
+        navigate('/host/ads');
+        break;
+      default:
+        addNotification('info', 'Metric Details', `Detailed view for ${metricTitle} will be displayed`);
+    }
   };
 
   const handleQuickAction = (actionTitle: string) => {
-    addNotification('info', 'Quick Action', `${actionTitle} functionality will be implemented soon`);
+    // Navigate to relevant page based on action
+    switch (actionTitle) {
+      case 'Manage Kiosks':
+        navigate('/host/kiosks');
+        break;
+      case 'Upload Ads':
+        navigate('/host/ads/upload');
+        break;
+      case 'Assign Ads':
+        navigate('/host/ads');
+        break;
+      case 'Revenue Dashboard':
+        navigate('/host/revenue');
+        break;
+      default:
+        addNotification('info', 'Quick Action', `${actionTitle} functionality will be implemented soon`);
+    }
   };
 
   const handleRecentActivityClick = (activity: string) => {
-    addNotification('info', 'Activity Details', `Details for "${activity}" will be shown`);
+    // Navigate to relevant page based on activity type
+    if (activity.includes('Kiosk')) {
+      navigate('/host/kiosks');
+    } else if (activity.includes('Ad') || activity.includes('assignment')) {
+      navigate('/host/ads');
+    } else if (activity.includes('payout') || activity.includes('revenue')) {
+      navigate('/host/payouts');
+    } else {
+      addNotification('info', 'Activity Details', `Details for "${activity}" will be shown`);
+    }
   };
 
   const handleChartInteraction = (chartType: string) => {
-    addNotification('info', 'Chart Interaction', `${chartType} chart interaction functionality will be implemented soon`);
+    // Navigate to revenue page for chart interactions
+    navigate('/host/revenue');
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Host Dashboard</h1>
+          <p className="mt-2">Loading your dashboard...</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -93,12 +200,25 @@ export default function HostDashboard() {
       <div>
         <h1 className="text-3xl font-bold">Host Dashboard</h1>
         <p className="mt-2">Monitor your kiosks and track revenue performance</p>
+        {notifications.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 text-orange-600 dark:text-orange-400">
+            <AlertCircle className="h-5 w-5" />
+            <span className="text-sm font-medium">
+              You have {notifications.length} unread notification{notifications.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => (
-          <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 60}ms` }}>
+          <div 
+            key={index} 
+            className="animate-fade-in-up cursor-pointer" 
+            style={{ animationDelay: `${index * 60}ms` }}
+            onClick={() => handleMetricClick(metric.title)}
+          >
             <MetricsCard {...metric} />
           </div>
         ))}
@@ -117,7 +237,13 @@ export default function HostDashboard() {
                     <div className="text-sm text-gray-500 dark:text-gray-400">{qa.description}</div>
                   </div>
                 </div>
-                <Button variant="secondary" size="sm">Open</Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => handleQuickAction(qa.title)}
+                >
+                  Open
+                </Button>
               </div>
             ))}
           </div>

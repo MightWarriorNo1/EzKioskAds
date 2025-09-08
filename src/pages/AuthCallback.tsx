@@ -12,7 +12,25 @@ export default function AuthCallback() {
       const user = data.session?.user;
       if (!isMounted) return;
       if (user) {
-        const role = (user.user_metadata?.role as 'client' | 'host' | 'admin') || 'client';
+        // Fetch role from profiles table (same logic as AuthContext)
+        let role: 'client' | 'host' | 'admin' = 'client';
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          if (!error && profile && (profile as any).role) {
+            role = (profile as any).role as 'client' | 'host' | 'admin';
+          } else {
+            // Fallback to metadata role
+            role = (user.user_metadata?.role as 'client' | 'host' | 'admin') || 'client';
+          }
+        } catch (_e) {
+          // Fallback to metadata role if profile lookup fails
+          role = (user.user_metadata?.role as 'client' | 'host' | 'admin') || 'client';
+        }
+
         switch (role) {
           case 'host':
             navigate('/host', { replace: true });

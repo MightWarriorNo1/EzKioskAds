@@ -12,7 +12,11 @@ import {
   LogOut,
   User,
   Settings,
-  Bell
+  Bell,
+  Package,
+  Megaphone,
+  Plug,
+  Archive
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationToast from '../NotificationToast';
@@ -22,9 +26,13 @@ import ThemeToggle from '../shared/ThemeToggle';
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: BarChart3 },
   { name: 'Ad Review Queue', href: '/admin/review', icon: Shield },
+  { name: 'Creative Orders', href: '/admin/creative-orders', icon: Package },
   { name: 'User Management', href: '/admin/users', icon: Users },
   { name: 'Kiosk Management', href: '/admin/kiosks', icon: MapPin },
   { name: 'Coupon Manager', href: '/admin/coupons', icon: Tag },
+  { name: 'Marketing Tools', href: '/admin/marketing', icon: Megaphone },
+  { name: 'Integrations', href: '/admin/integrations', icon: Plug },
+  { name: 'Asset Lifecycle', href: '/admin/assets', icon: Archive },
   { name: 'System Settings', href: '/admin/settings', icon: SettingsIcon },
 ];
 
@@ -43,10 +51,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <NotificationToast />
       
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64  shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <Logo 
               size="xl" 
               showText={true} 
@@ -62,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto border-r border-white">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -89,7 +97,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </nav>
 
           {/* User Profile */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="p-4 border-r border-white">
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -135,7 +143,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="lg:ml-64">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <header className="shadow-sm border-b border-gray-200 sticky top-0 z-40">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center space-x-4">
               <button
@@ -144,9 +152,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 <Menu className="h-6 w-6" />
               </button>
-              <div className="hidden sm:block">
-                <span className="text-sm text-gray-500">Admin Portal</span>
-              </div>
             </div>
             
             <div className="flex items-center space-x-4">

@@ -20,6 +20,11 @@ import SiteHeader from '../components/layouts/SiteHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
+import { Elements, useElements, useStripe, PaymentElement } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { BillingService } from '../services/billingService';
+import { CustomAdsService } from '../services/customAdsService';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface ServiceTile {
   id: string;
@@ -91,9 +96,14 @@ export default function CustomAdsPage() {
   });
   const [formErrors, setFormErrors] = useState<Partial<OrderFormData>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentStep, setPaymentStep] = useState<'form' | 'pay'>('form');
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const { user }=useAuth();
   const navigate=useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const handleServiceSelect = (service: ServiceTile) => {
     if (!user) {
@@ -197,15 +207,30 @@ export default function CustomAdsPage() {
     
     if (!validateForm()) return;
 
+    if (!recaptchaToken) {
+      alert('Please complete the reCAPTCHA');
+      return;
+    }
+
     setIsUploading(true);
     
     try {
-      // Here you would integrate with your payment processor
-      // For now, we'll simulate the process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Order submitted successfully! You will be redirected to payment.');
-      // Redirect to payment or show success message
+      if (!selectedService) throw new Error('No service selected');
+      const intent = await BillingService.createPaymentIntent({
+        amount: Math.round(selectedService.price * 100),
+        currency: 'usd',
+        metadata: {
+          serviceId: selectedService.id,
+          email: formData.email,
+        },
+        recaptchaToken: recaptchaToken,
+      });
+      if (!intent?.clientSecret) {
+        alert('Unable to start payment. Please try again.');
+      } else {
+        setClientSecret(intent.clientSecret);
+        setPaymentStep('pay');
+      }
     } catch (error) {
       alert('Error submitting order. Please try again.');
     } finally {
@@ -365,6 +390,7 @@ export default function CustomAdsPage() {
                 </div>
               </div>
 
+              {paymentStep === 'form' && (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
@@ -411,7 +437,7 @@ export default function CustomAdsPage() {
                   required
                 />
 
-                <div>
+                <div className='dark:text-white'>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Project Details
                   </label>
@@ -489,11 +515,14 @@ export default function CustomAdsPage() {
                   )}
                 </div>
 
-                {/* reCAPTCHA Placeholder */}
+                {/* reCAPTCHA */}
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    reCAPTCHA verification will be implemented here
-                  </p>
+                  <div className="flex justify-center">
+                    <ReCAPTCHA
+                      sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY as string}
+                      onChange={(token) => setRecaptchaToken(token)}
+                    />
+                  </div>
                 </div>
 
                 {/* Virus Scan Notice */}
@@ -518,11 +547,110 @@ export default function CustomAdsPage() {
                   </Button>
                 </div>
               </form>
+              )}
+
+              {paymentStep === 'pay' && clientSecret && (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <StripePaySection
+                    amount={selectedService.price}
+                    email={formData.email}
+                    onBack={() => setPaymentStep('form')}
+                    message={paymentMessage}
+                    setMessage={setPaymentMessage}
+                    onSuccess={async () => {
+                      try {
+                        if (!user) return;
+                        await CustomAdsService.createOrder({
+                          userId: user.id,
+                          serviceKey: selectedService.id,
+                          firstName: formData.firstName,
+                          lastName: formData.lastName,
+                          email: formData.email,
+                          phone: formData.phone,
+                          address: formData.address,
+                          details: formData.details,
+                          files: formData.files,
+                          totalAmount: selectedService.price,
+                        });
+                        setPaymentMessage('Payment succeeded and your order has been saved.');
+                      } catch (e) {
+                        setPaymentMessage('Payment succeeded, but saving your order failed. Please contact support.');
+                      }
+                    }}
+                  />
+                </Elements>
+              )}
             </div>
           </Card>
         )}
       </div>
     </div>
+  );
+}
+
+function StripePaySection(props: {
+  amount: number;
+  email: string;
+  onBack: () => void;
+  message: string | null;
+  setMessage: (m: string | null) => void;
+  onSuccess?: () => void | Promise<void>;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setIsProcessing(true);
+    props.setMessage(null);
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.origin + '/client',
+        receipt_email: props.email,
+      },
+      redirect: 'if_required',
+    });
+    if (error) {
+      props.setMessage(error.message || 'Payment failed.');
+      setIsProcessing(false);
+      return;
+    }
+    if (paymentIntent && paymentIntent.status === 'succeeded') {
+      props.setMessage('Payment succeeded!');
+      if (props.onSuccess) {
+        await Promise.resolve(props.onSuccess());
+      }
+    }
+    setIsProcessing(false);
+  };
+
+  return (
+    <form onSubmit={handleConfirm} className="space-y-6">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">Payment</h3>
+          <span className="text-lg font-semibold">${props.amount}</span>
+        </div>
+      </div>
+
+      <PaymentElement />
+
+      {props.message && (
+        <p className="text-sm text-red-600">{props.message}</p>
+      )}
+
+      <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        <Button type="button" variant="secondary" onClick={props.onBack}>
+          Back
+        </Button>
+        <Button type="submit" disabled={!stripe || !elements || isProcessing}>
+          {isProcessing ? 'Processing...' : 'Confirm and Pay'}
+        </Button>
+      </div>
+    </form>
   );
 }
 
