@@ -9,7 +9,7 @@ interface AuthLayoutProps {
   subtitle?: string;
 }
 
-export default function AuthLayout({ children, title = 'Welcome to EzKiosk Ad Platform', subtitle = 'Access your dashboard to manage your advertising campaigns across our network of digital kiosks.' }: AuthLayoutProps) {
+export default function AuthLayout({ children, title = 'Welcome to EZ Kiosk Ads', subtitle = 'Access your dashboard to manage your advertising campaigns across our network of digital kiosks.' }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <div className="min-h-screen relative isolate overflow-hidden">

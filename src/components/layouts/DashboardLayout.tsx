@@ -8,7 +8,8 @@ import {
   User,
   HelpCircle,
   LogOut,
-  Target
+  Target,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../shared/Logo';
@@ -58,7 +59,6 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[rgb(var(--surface))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 flex pt-16">
-      {/* Left Sidebar - Fixed */}
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div className="fixed left-0 right-0 top-16 bottom-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
@@ -107,10 +107,29 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col lg:ml-72">
         {/* Header */}
         <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/70 dark:bg-gray-900/60 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 md:px-8 flex items-center justify-between">
+          {/* Left side - Menu button */}
           <button className="lg:hidden btn-secondary" onClick={() => setMobileOpen(v => !v)}>
-            Menu
+            <Menu className="h-6 w-6" />
           </button>
-          <div className="flex items-center">
+          
+          {/* Center - Logo and Branding (Mobile) */}
+          <div className="lg:hidden flex items-center justify-center flex-1">
+            <div className="flex items-center space-x-3">
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg border border-white/20 p-1">
+                <Logo 
+                  size="sm" 
+                  showText={false} 
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-slate-900 dark:text-white">EZ Kiosk Ads</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Desktop Logo */}
+          <div className="hidden lg:flex items-center">
             <Link to="/" className="hover:opacity-90 transition-opacity">
               <Logo
                 size="xl"
@@ -120,7 +139,8 @@ export default function DashboardLayout({
               />
             </Link>
           </div>
-          <div className="flex-1" />
+          
+          {/* Right side - Theme Toggle */}
           <ThemeToggle variant="dropdown" size="md" />
         </div>
 

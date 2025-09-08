@@ -110,7 +110,7 @@ Method: ${receiptData.method}
 Period: ${receiptData.period}
 Status: ${receiptData.status}
 
-Thank you for using ezkioskads.com!
+Thank you for using EZ Kiosk Ads!
       `.trim();
 
       const blob = new Blob([receiptContent], { type: 'text/plain' });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, MapPin, List, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layouts/DashboardLayout';
@@ -6,7 +6,7 @@ import LeafletMap from '../components/MapContainer';
 import { LatLngTuple } from 'leaflet';
 
 interface KioskData {
-  id: string;
+  id?: string;
   name: string;
   city: string;
   price: string;
@@ -14,8 +14,8 @@ interface KioskData {
   traffic: 'Low Traffic' | 'Medium Traffic' | 'High Traffic';
   hasWarning?: boolean;
   position: LatLngTuple;
-  address: string;
-  description: string;
+  address?: string;
+  description?: string;
 }
 
 export default function KioskSelectionPage() {
@@ -96,7 +96,7 @@ export default function KioskSelectionPage() {
   const filteredKiosks = kioskData.filter(kiosk =>
     kiosk.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     kiosk.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    kiosk.address.toLowerCase().includes(searchQuery.toLowerCase())
+    (kiosk.address && kiosk.address.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -107,10 +107,34 @@ export default function KioskSelectionPage() {
     >
 
       {/* Progress Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-4">
+      <div className="mb-6 md:mb-8">
+        {/* Mobile Progress - Vertical Stack */}
+        <div className="block md:hidden">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
+              steps[1].current 
+                ? 'bg-black text-white' 
+                : steps[1].completed
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[1].completed ? '✓' : steps[1].number}
+            </div>
+            <span className={`text-sm font-medium ${
+              steps[1].current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[1].name}
+            </span>
+          </div>
+          <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+            Step 2 of {steps.length}
+          </div>
+        </div>
+        
+        {/* Desktop Progress - Horizontal */}
+        <div className="hidden md:flex items-center space-x-4 overflow-x-auto">
           {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
+            <div key={step.number} className="flex items-center flex-shrink-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
                 step.completed 
                   ? 'bg-green-600 text-white' 
@@ -120,7 +144,7 @@ export default function KioskSelectionPage() {
               }`}>
                 {step.completed ? '✓' : step.number}
               </div>
-              <span className={`ml-2 text-sm font-medium ${
+              <span className={`ml-2 text-sm font-medium whitespace-nowrap ${
                 step.current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`}>
                 {step.name}
@@ -147,13 +171,13 @@ export default function KioskSelectionPage() {
       </div>
 
       {/* Section Title */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Kiosk</h2>
-        <p className="text-gray-600 dark:text-gray-300">Select a kiosk for your advertising campaign</p>
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Kiosk</h2>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Select a kiosk for your advertising campaign</p>
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="relative max-w-xl">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -161,63 +185,65 @@ export default function KioskSelectionPage() {
             placeholder="Search kiosks by name, city, or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-soft"
+            className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-soft text-sm md:text-base"
           />
         </div>
       </div>
 
       {/* View Mode Toggle */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="inline-flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-soft">
           <button
             onClick={() => setViewMode('map')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium transition-colors ${
               viewMode === 'map'
                 ? 'bg-black text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
-            <MapPin className="h-4 w-4 inline mr-2" />
-            Map View
+            <MapPin className="h-3 w-3 md:h-4 md:w-4 inline mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Map View</span>
+            <span className="sm:hidden">Map</span>
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium transition-colors ${
               viewMode === 'list'
                 ? 'bg-black text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
-            <List className="h-4 w-4 inline mr-2" />
-            List View
+            <List className="h-3 w-3 md:h-4 md:w-4 inline mr-1 md:mr-2" />
+            <span className="hidden sm:inline">List View</span>
+            <span className="sm:hidden">List</span>
           </button>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         {viewMode === 'map' ? (
-          <div className="h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-elevated">
+          <div className="h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-elevated">
             <LeafletMap
               center={[33.5689, -117.1865]}
               zoom={11}
               className="h-full w-full"
               kioskData={filteredKiosks}
               onKioskSelect={(k) => setSelectedKiosk(k)}
-              selectedKioskIds={selectedKiosk ? [selectedKiosk.id] : []}
+              selectedKioskIds={selectedKiosk && selectedKiosk.id ? [selectedKiosk.id] : []}
             />
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredKiosks.map((kiosk) => (
-              <div key={kiosk.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow-soft hover:shadow-elevated transition-shadow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{kiosk.name}</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">{kiosk.address}</p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">{kiosk.description}</p>
-                    <div className="flex items-center space-x-4">
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+              <div key={kiosk.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 bg-white dark:bg-gray-800 shadow-soft hover:shadow-elevated transition-shadow">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start space-y-3 md:space-y-0">
+                  <div className="flex-1">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-1">{kiosk.name}</h3>
+                    <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-2">{kiosk.address}</p>
+                    <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-3 md:mb-4">{kiosk.description}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                      <span className={`text-xs px-3 py-1 rounded-full font-medium w-fit ${
                         kiosk.traffic === 'High Traffic' 
                           ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                           : kiosk.traffic === 'Medium Traffic'
@@ -236,7 +262,7 @@ export default function KioskSelectionPage() {
                   </div>
                   <button 
                     onClick={() => setSelectedKiosk(kiosk)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full md:w-auto ${
                       selectedKiosk?.id === kiosk.id
                         ? 'bg-green-600 text-white cursor-default'
                         : 'bg-black dark:bg-gray-900 text-white hover:bg-gray-800 dark:hover:bg-gray-700'
@@ -252,19 +278,19 @@ export default function KioskSelectionPage() {
 
       {/* Selected Kiosk Summary */}
       {selectedKiosk && (
-        <div className="mb-8 border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow-soft">
-          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Selected Kiosk</h3>
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="mb-6 md:mb-8 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 bg-white dark:bg-gray-800 shadow-soft">
+          <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-2 text-gray-900 dark:text-white">Selected Kiosk</h3>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-3 md:space-y-0">
+            <div className="flex-1">
               <div className="font-bold text-gray-900 dark:text-white">{selectedKiosk.name}</div>
-              <div className="text-gray-600 dark:text-gray-400">{selectedKiosk.city}</div>
+              <div className="text-sm md:text-base text-gray-600 dark:text-gray-400">{selectedKiosk.city}</div>
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{selectedKiosk.address}</div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-col md:text-right space-y-2 md:space-y-0">
               <div className="text-green-600 dark:text-green-400 font-semibold">{selectedKiosk.price}</div>
               <button 
                 onClick={() => setSelectedKiosk(null)}
-                className="mt-2 text-sm text-gray-600 dark:text-gray-300 underline hover:text-gray-900 dark:hover:text-white">
+                className="text-sm text-gray-600 dark:text-gray-300 underline hover:text-gray-900 dark:hover:text-white w-fit">
                 Clear selection
               </button>
             </div>
@@ -277,28 +303,29 @@ export default function KioskSelectionPage() {
         <button 
           disabled={!selectedKiosk}
           onClick={() => setShowContentModal(true)}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors shadow-soft ${selectedKiosk ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}`}>
-          Continue to Select Weeks
+          className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-soft text-sm md:text-base ${selectedKiosk ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}`}>
+          <span className="hidden md:inline">Continue to Select Weeks</span>
+          <span className="md:hidden">Continue</span>
         </button>
       </div>
 
       {/* Content Limitations Modal */}
       {showContentModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg w-[460px] max-w-[90vw] p-6 shadow-elevated border border-gray-200 dark:border-gray-700">
-            <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Limitations for {selectedKiosk?.name}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please review these content restrictions before proceeding</div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-800">
-              <div className="font-semibold text-gray-900 dark:text-white mb-1">Important Notice</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Your business and advertisements must comply with the following limitations. Non-compliant ads will be rejected during the approval process.</div>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md md:max-w-lg p-4 md:p-6 shadow-elevated border border-gray-200 dark:border-gray-700">
+            <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Limitations for {selectedKiosk?.name}</div>
+            <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-4">Please review these content restrictions before proceeding</div>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-4 mb-4 bg-gray-50 dark:bg-gray-800">
+              <div className="font-semibold text-gray-900 dark:text-white mb-1 text-sm md:text-base">Important Notice</div>
+              <div className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Your business and advertisements must comply with the following limitations. Non-compliant ads will be rejected during the approval process.</div>
             </div>
-            <div className="text-gray-900 dark:text-gray-100 text-sm space-y-1 mb-6">
+            <div className="text-gray-900 dark:text-gray-100 text-xs md:text-sm space-y-1 mb-6">
               <div>No Gyms</div>
               <div>No Workout Supplements</div>
             </div>
-            <div className="flex justify-end space-x-3">
-              <button onClick={() => setShowContentModal(false)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">Cancel</button>
-              <button onClick={() => navigate('/client/select-weeks', { state: { kiosk: selectedKiosk } })} className="px-4 py-2 rounded-lg bg-black dark:bg-gray-900 text-white">I Understand & Accept</button>
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+              <button onClick={() => setShowContentModal(false)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm md:text-base">Cancel</button>
+              <button onClick={() => navigate('/client/select-weeks', { state: { kiosk: selectedKiosk } })} className="px-4 py-2 rounded-lg bg-black dark:bg-gray-900 text-white text-sm md:text-base">I Understand & Accept</button>
             </div>
           </div>
         </div>

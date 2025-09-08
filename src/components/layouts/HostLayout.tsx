@@ -7,9 +7,7 @@ import {
   DollarSign, 
   CreditCard, 
   Menu, 
-  LogOut,
-  User,
-  Bell
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationToast from '../NotificationToast';
@@ -34,7 +32,7 @@ export default function HostLayout({ children }: HostLayoutProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
 
   const handleLogoClick = () => {
     navigate('/');
@@ -58,8 +56,33 @@ export default function HostLayout({ children }: HostLayoutProps) {
       {/* Top Header */}
       <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="flex items-center justify-between h-16 px-6">
-          {/* Logo */}
-          <div className="flex items-center">
+          {/* Left side - Menu button */}
+          <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+            <Menu className="h-6 w-6" />
+          </button>
+          
+          {/* Center - Logo and Branding (Mobile) */}
+          <div className="lg:hidden flex items-center justify-center flex-1">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg border border-white/20 p-1">
+                <Logo 
+                  size="sm" 
+                  showText={false} 
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">KIOSK ADS.com</div>
+                <div className="text-lg font-bold text-slate-900 dark:text-white">EZ Kiosk Ads</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Desktop Logo */}
+          <div className="hidden lg:flex items-center">
             <button
               onClick={handleLogoClick}
               className="flex items-center hover:opacity-80 transition-opacity"
@@ -75,21 +98,11 @@ export default function HostLayout({ children }: HostLayoutProps) {
           
           {/* Right side controls */}
           <div className="flex items-center space-x-4">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            
             {/* Theme Toggle */}
             <ThemeToggle variant="dropdown" size="md" />
             
             {/* Notifications */}
             <NotificationDropdown />
-            
-    
           </div>
         </div>
       </header>

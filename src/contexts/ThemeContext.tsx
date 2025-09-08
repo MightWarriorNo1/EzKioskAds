@@ -14,12 +14,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as Theme) || 'system';
+      return (localStorage.getItem('theme') as Theme) || 'dark';
     }
-    return 'system';
+    return 'dark';
   });
 
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
+  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     const root = document.documentElement;

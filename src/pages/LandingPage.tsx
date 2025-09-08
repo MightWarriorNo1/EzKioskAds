@@ -52,7 +52,7 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="h-full flex flex-col items-center justify-center text-center px-6">
                 <div className="text-2xl font-bold mb-2">Want your ad shown here?</div>
-                <div className="text-sm text-gray-300">ezkioskads.com</div>
+                <div className="text-sm text-gray-300">EZ Kiosk Ads</div>
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="px-6 py-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          <p>© 2025 ezkioskads.com. All rights reserved.</p>
+          <p>© 2025 EZ Kiosk Ads. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link to="/contact" className="hover:underline">Contact</Link>
             <Link to="/#pricing" className="hover:underline">Pricing</Link>

@@ -55,7 +55,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">EzKiosksAd</span>
+                <span className="text-xl font-bold text-white">EZ Kiosk Ads</span>
                 <p className="text-xs text-white/80">Client Portal</p>
               </div>
             </Link>
@@ -146,14 +146,15 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         {/* Header */}
         <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg border-b border-slate-200/50 dark:border-slate-700/50 fixed top-0 right-0 left-0 lg:left-72 z-40">
           <div className="flex items-center justify-between h-20 px-6">
-            <div className="flex items-center space-x-4">
+            {/* Left side - Menu button */}
+            <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <Menu className="h-6 w-6" />
               </button>
-              <div className="hidden sm:block">
+              <div className="hidden lg:block">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Client Portal</span>
@@ -161,6 +162,24 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </div>
             </div>
             
+            {/* Center - Logo and Branding (Mobile) */}
+            <div className="lg:hidden flex items-center justify-center flex-1">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg border border-white/20 p-1">
+                  <Logo 
+                    size="sm" 
+                    showText={false} 
+                    className="w-full h-full"
+                  />
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">KIOSK ADS.com</div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white">EZ Kiosk Ads</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right side - Controls */}
             <div className="flex items-center space-x-4">
               {/* Theme Toggle */}
               <ThemeToggle variant="dropdown" size="md" />

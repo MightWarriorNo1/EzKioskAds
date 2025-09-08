@@ -57,7 +57,7 @@ export class GmailService {
     subject: string,
     htmlBody: string,
     textBody?: string,
-    fromName: string = 'ezkioskads.com'
+    fromName: string = 'EZ Kiosk Ads'
   ): Promise<boolean> {
     if (!this.isConfigured()) {
       throw new Error('Gmail service is not configured');
@@ -196,7 +196,7 @@ export class GmailService {
     subject: string,
     htmlBody: string,
     textBody?: string,
-    fromName: string = 'ezkioskads.com'
+    fromName: string = 'EZ Kiosk Ads'
   ): string {
     const boundary = 'boundary_' + Math.random().toString(36).substr(2, 9);
     const fromEmail = 'noreply@ezkioskads.com'; // This should be configured

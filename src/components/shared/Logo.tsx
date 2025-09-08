@@ -45,7 +45,7 @@ export default function Logo({
       />
       {showText && (
         <span className={`font-bold ${getTextColor()} ${textClassName}`}>
-          EzKiosksAd
+          EZ Kiosk Ads
         </span>
       )}
     </div>

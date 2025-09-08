@@ -1,6 +1,6 @@
 {
-  "name": "EZ Ad Management Platform",
-  "short_name": "EZ Ads",
+  "name": "EZ Kiosk Ads",
+  "short_name": "EZ Kiosk Ads",
   "description": "Professional ad management platform for digital signage and kiosks",
   "start_url": "/",
   "display": "standalone",

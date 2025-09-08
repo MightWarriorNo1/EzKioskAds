@@ -150,16 +150,16 @@ INSERT INTO email_templates (name, type, subject, body_html, body_text, variable
   'Ad Approval',
   'ad_approval',
   'Your Ad Has Been Approved - {{campaign_name}}',
-  '<h2>Great News!</h2><p>Your ad for campaign "{{campaign_name}}" has been approved and is now live.</p><p>Campaign Details:</p><ul><li>Start Date: {{start_date}}</li><li>End Date: {{end_date}}</li><li>Budget: ${{budget}}</li></ul><p>You can view your campaign performance in your dashboard.</p><p>Best regards,<br>The ezkioskads.com Team</p>',
-  'Great News! Your ad for campaign "{{campaign_name}}" has been approved and is now live. Campaign Details: Start Date: {{start_date}}, End Date: {{end_date}}, Budget: ${{budget}}. You can view your campaign performance in your dashboard. Best regards, The ezkioskads.com Team',
+  '<h2>Great News!</h2><p>Your ad for campaign "{{campaign_name}}" has been approved and is now live.</p><p>Campaign Details:</p><ul><li>Start Date: {{start_date}}</li><li>End Date: {{end_date}}</li><li>Budget: ${{budget}}</li></ul><p>You can view your campaign performance in your dashboard.</p><p>Best regards,<br>The EZ Kiosk Ads Team</p>',
+  'Great News! Your ad for campaign "{{campaign_name}}" has been approved and is now live. Campaign Details: Start Date: {{start_date}}, End Date: {{end_date}}, Budget: ${{budget}}. You can view your campaign performance in your dashboard. Best regards, The EZ Kiosk Ads Team',
   '{"campaign_name": "string", "start_date": "date", "end_date": "date", "budget": "number"}'
 ),
 (
   'Ad Rejection',
   'ad_rejection',
   'Ad Review Update - {{campaign_name}}',
-  '<h2>Ad Review Update</h2><p>We''ve reviewed your ad for campaign "{{campaign_name}}" and unfortunately it doesn''t meet our guidelines.</p><p><strong>Reason for rejection:</strong> {{rejection_reason}}</p><p>Please review our advertising guidelines and submit a new version. We''re here to help if you have any questions.</p><p>Best regards,<br>The ezkioskads.com Team</p>',
-  'Ad Review Update: We''ve reviewed your ad for campaign "{{campaign_name}}" and unfortunately it doesn''t meet our guidelines. Reason for rejection: {{rejection_reason}}. Please review our advertising guidelines and submit a new version. We''re here to help if you have any questions. Best regards, The ezkioskads.com Team',
+  '<h2>Ad Review Update</h2><p>We''ve reviewed your ad for campaign "{{campaign_name}}" and unfortunately it doesn''t meet our guidelines.</p><p><strong>Reason for rejection:</strong> {{rejection_reason}}</p><p>Please review our advertising guidelines and submit a new version. We''re here to help if you have any questions.</p><p>Best regards,<br>The EZ Kiosk Ads Team</p>',
+  'Ad Review Update: We''ve reviewed your ad for campaign "{{campaign_name}}" and unfortunately it doesn''t meet our guidelines. Reason for rejection: {{rejection_reason}}. Please review our advertising guidelines and submit a new version. We''re here to help if you have any questions. Best regards, The EZ Kiosk Ads Team',
   '{"campaign_name": "string", "rejection_reason": "string"}'
 );
 

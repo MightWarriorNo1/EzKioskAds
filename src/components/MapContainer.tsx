@@ -27,6 +27,8 @@ interface KioskData {
   traffic: 'Low Traffic' | 'Medium Traffic' | 'High Traffic';
   hasWarning?: boolean;
   position: LatLngTuple;
+  address?: string;
+  description?: string;
 }
 
 

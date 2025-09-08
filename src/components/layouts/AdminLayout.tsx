@@ -50,24 +50,76 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       <NotificationToast />
       
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64  shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-            <Logo 
-              size="xl" 
-              showText={true} 
-              textClassName="text-3xl font-bold text-gray-900" 
-              variant="dark"
-            />
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
+
+      <header className="bg-white dark:bg-slate-800 border-b border-gray-200 sticky top-0 z-40">
+          <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <Logo 
+                size="lg" 
+                showText={true} 
+                textClassName="text-xl font-bold text-gray-900 dark:text-white" 
+                variant="dark"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <ThemeToggle variant="dropdown" size="md" />
+              
+              {/* Notifications */}
+              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              
+              {/* Mobile User Menu */}
+              <div className="lg:hidden relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                </button>
+                
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                      <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                    </div>
+                    <Link
+                      to="/admin/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setUserMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+        </header>
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 pt-16  shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        <div className="flex flex-col h-full">
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto border-r border-white">
@@ -143,66 +195,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="lg:ml-64">
         {/* Header */}
-        <header className="shadow-sm border-b border-gray-200 sticky top-0 z-40">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Theme Toggle */}
-              <ThemeToggle variant="dropdown" size="md" />
-              
-              {/* Notifications */}
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              
-              {/* Mobile User Menu */}
-              <div className="lg:hidden relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                </button>
-                
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-                    </div>
-                    <Link
-                      to="/admin/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      Settings
-                    </Link>
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setUserMenuOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
+        
 
         {/* Page Content */}
         <main className="p-6">

@@ -121,10 +121,34 @@ export default function SelectWeeksPage() {
     <DashboardLayout title="Create New Campaign" subtitle="" showBreadcrumb={false}>
 
       {/* Steps */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-4">
+      <div className="mb-6 md:mb-8">
+        {/* Mobile Progress - Vertical Stack */}
+        <div className="block md:hidden">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
+              steps[2].current 
+                ? 'bg-black text-white' 
+                : steps[2].completed
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[2].completed ? '✓' : steps[2].number}
+            </div>
+            <span className={`text-sm font-medium ${
+              steps[2].current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[2].name}
+            </span>
+          </div>
+          <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+            Step 3 of {steps.length}
+          </div>
+        </div>
+        
+        {/* Desktop Progress - Horizontal */}
+        <div className="hidden md:flex items-center space-x-4 overflow-x-auto">
           {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
+            <div key={step.number} className="flex items-center flex-shrink-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
                 step.completed 
                   ? 'bg-green-600 text-white' 
@@ -134,7 +158,7 @@ export default function SelectWeeksPage() {
               }`}>
                 {step.completed ? '✓' : step.number}
               </div>
-              <span className={`ml-2 text-sm font-medium ${
+              <span className={`ml-2 text-sm font-medium whitespace-nowrap ${
                 step.current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`}>
                 {step.name}
@@ -191,63 +215,63 @@ export default function SelectWeeksPage() {
           Weekly Selection — Select weeks (Monday to Sunday) for your campaign.
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
           <button 
             onClick={() => setBookingType('weekly')}
-            className={`group relative border-2 rounded-xl p-6 text-left shadow-soft hover:shadow-elevated transition-all duration-200 ${
+            className={`group relative border-2 rounded-xl p-4 md:p-6 text-left shadow-soft hover:shadow-elevated transition-all duration-200 ${
               bookingType === 'weekly' 
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-100 dark:ring-blue-900/30' 
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
             }`}>
             <div className="flex items-center space-x-3 mb-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${
                 bookingType === 'weekly' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}>
-                <Calendar className="h-5 w-5" />
+                <Calendar className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <div className={`font-bold text-lg ${
+                <div className={`font-bold text-base md:text-lg ${
                   bookingType === 'weekly' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                 }`}>Week-by-Week</div>
-                <div className="text-sm text-gray-600 dark:text-gray-300">Select specific weeks for your campaign</div>
+                <div className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Select specific weeks for your campaign</div>
               </div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Perfect for seasonal campaigns or specific event promotions. Choose exactly which weeks work best for your business.
             </div>
             {bookingType === 'weekly' && (
-              <div className="absolute top-4 right-4 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-white" />
+              <div className="absolute top-3 right-3 md:top-4 md:right-4 w-5 h-5 md:w-6 md:h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
               </div>
             )}
           </button>
           
           <button 
             onClick={() => setBookingType('subscription')}
-            className={`group relative border-2 rounded-xl p-6 text-left shadow-soft hover:shadow-elevated transition-all duration-200 ${
+            className={`group relative border-2 rounded-xl p-4 md:p-6 text-left shadow-soft hover:shadow-elevated transition-all duration-200 ${
               bookingType === 'subscription' 
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-4 ring-blue-100 dark:ring-blue-900/30' 
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
             }`}>
             <div className="flex items-center space-x-3 mb-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${
                 bookingType === 'subscription' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}>
-                <Clock className="h-5 w-5" />
+                <Clock className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <div className={`font-bold text-lg ${
+                <div className={`font-bold text-base md:text-lg ${
                   bookingType === 'subscription' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                 }`}>Subscription</div>
-                <div className="text-sm text-gray-600 dark:text-gray-300">Monthly subscription with guaranteed slots</div>
+                <div className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Monthly subscription with guaranteed slots</div>
               </div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Get consistent exposure with reserved slots. Save 15% with 3-month commitment and never worry about availability.
             </div>
             {bookingType === 'subscription' && (
-              <div className="absolute top-4 right-4 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-white" />
+              <div className="absolute top-3 right-3 md:top-4 md:right-4 w-5 h-5 md:w-6 md:h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
               </div>
             )}
           </button>
@@ -260,37 +284,37 @@ export default function SelectWeeksPage() {
               <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <span>Select Weeks</span>
             </div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-gray-50 dark:bg-gray-900/50 max-w-2xl shadow-soft">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 bg-gray-50 dark:bg-gray-900/50 max-w-2xl shadow-soft">
               <div className="flex items-center justify-between mb-4">
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
                   {calendarMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 md:space-x-3">
                   <button 
                     onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth()-1, 1))} 
-                    className="w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex items-center justify-center shadow-soft"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex items-center justify-center shadow-soft"
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                   <button 
                     onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth()+1, 1))} 
-                    className="w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex items-center justify-center shadow-soft"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex items-center justify-center shadow-soft"
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                 </div>
               </div>
               
-              <div className="grid grid-cols-7 gap-2 text-sm font-semibold text-center text-gray-600 dark:text-gray-400 mb-4">
-                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d} className="py-2">{d}</div>)}
+              <div className="grid grid-cols-7 gap-1 md:gap-2 text-xs md:text-sm font-semibold text-center text-gray-600 dark:text-gray-400 mb-3 md:mb-4">
+                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d} className="py-1 md:py-2">{d}</div>)}
               </div>
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1 md:gap-2">
                 {cells.map((c, i) => c ? (
                   <button
                     key={i}
                     disabled={!isMonday(c) || isPastDate(c)}
                     onClick={() => isMonday(c) && toggleWeeklyMonday(c)}
-                    className={`h-12 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    className={`h-8 md:h-12 text-xs md:text-sm rounded-lg md:rounded-xl font-medium transition-all duration-200 ${
                       !isMonday(c) 
                         ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
                         : isPastDate(c)
@@ -304,17 +328,17 @@ export default function SelectWeeksPage() {
                 ) : <div key={i} />)}
               </div>
               
-              <div className="flex items-center justify-center space-x-6 text-sm text-gray-600 dark:text-gray-300 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-4 md:mt-6 pt-3 md:pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2">
-                  <span className="inline-block w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded border"/>
+                  <span className="inline-block w-3 h-3 md:w-4 md:h-4 bg-gray-200 dark:bg-gray-700 rounded border"/>
                   <span>Available Mondays</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="inline-block w-4 h-4 bg-blue-500 rounded"/>
+                  <span className="inline-block w-3 h-3 md:w-4 md:h-4 bg-blue-500 rounded"/>
                   <span>Selected Weeks</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="inline-block w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded border"/>
+                  <span className="inline-block w-3 h-3 md:w-4 md:h-4 bg-gray-100 dark:bg-gray-800 rounded border"/>
                   <span>Past Dates</span>
                 </div>
               </div>
@@ -389,7 +413,7 @@ export default function SelectWeeksPage() {
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-semibold mb-3 text-gray-900 dark:text-white flex items-center space-x-2">
+                    <label className="flex items-center space-x-2 text-sm font-semibold mb-3 text-gray-900 dark:text-white">
                       <DollarSign className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                       <span>Ad Slots Per Week</span>
                     </label>
@@ -583,19 +607,20 @@ export default function SelectWeeksPage() {
               }
             }}
             disabled={!canContinue} 
-            className={`group relative px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 shadow-soft ${
+            className={`group relative px-4 md:px-8 py-3 md:py-4 rounded-xl font-semibold text-sm md:text-lg transition-all duration-200 shadow-soft ${
               canContinue 
                 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105' 
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
             }`}
           >
             {canContinue ? (
-              <div className="flex items-center space-x-3">
-                <span>Continue to Ad Duration & Media</span>
-                <ArrowLeft className="h-5 w-5 transform rotate-180 group-hover:translate-x-1 transition-transform" />
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <span className="hidden md:inline">Continue to Ad Duration & Media</span>
+                <span className="md:hidden">Continue</span>
+                <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 transform rotate-180 group-hover:translate-x-1 transition-transform" />
               </div>
             ) : (
-              <span>Select weeks to continue</span>
+              <span className="text-xs md:text-base">Select weeks to continue</span>
             )}
           </button>
         </div>

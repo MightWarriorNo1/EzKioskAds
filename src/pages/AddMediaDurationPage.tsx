@@ -245,10 +245,34 @@ export default function AddMediaDurationPage() {
       showBreadcrumb={false}
     >
       {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-4">
+      <div className="mb-6 md:mb-8">
+        {/* Mobile Progress - Vertical Stack */}
+        <div className="block md:hidden">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
+              steps[3].current 
+                ? 'bg-black text-white' 
+                : steps[3].completed
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[3].completed ? '✓' : steps[3].number}
+            </div>
+            <span className={`text-sm font-medium ${
+              steps[3].current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {steps[3].name}
+            </span>
+          </div>
+          <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+            Step 4 of {steps.length}
+          </div>
+        </div>
+        
+        {/* Desktop Progress - Horizontal */}
+        <div className="hidden md:flex items-center space-x-4 overflow-x-auto">
           {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
+            <div key={step.number} className="flex items-center flex-shrink-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-soft ${
                 step.completed 
                   ? 'bg-green-600 text-white' 
@@ -258,7 +282,7 @@ export default function AddMediaDurationPage() {
               }`}>
                 {step.completed ? '✓' : step.number}
               </div>
-              <span className={`ml-2 text-sm font-medium ${
+              <span className={`ml-2 text-sm font-medium whitespace-nowrap ${
                 step.current ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`}>
                 {step.name}
@@ -285,38 +309,38 @@ export default function AddMediaDurationPage() {
       </div>
 
       {/* Section Title */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Add Media & Duration</h2>
-        <p className="text-gray-600 dark:text-gray-300">Choose your ad duration and upload media</p>
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">Add Media & Duration</h2>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Choose your ad duration and upload media</p>
       </div>
 
       {/* Slot Reservation Warning */}
-      <div className="mb-6 p-4 bg-yellow-50 border border-red-200 rounded-lg">
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-yellow-50 border border-red-200 rounded-lg">
+        <div className="flex items-start space-x-2">
+          <div className="w-4 h-4 md:w-5 md:h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
             <span className="text-white text-xs font-bold">!</span>
           </div>
-          <Clock className="w-5 h-5 text-red-500" />
-          <span className="text-red-800 font-medium">
+          <Clock className="w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <span className="text-red-800 font-medium text-sm md:text-base">
             Slot Reservation Your reserved slots will expire in {formatTime(timeRemaining)}. Please complete your purchase before time runs out.
           </span>
         </div>
       </div>
 
       {/* Add Media & Duration Section */}
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Add Media & Duration
           </h2>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
             Choose your ad duration and upload media
           </p>
         </div>
 
         {/* Ad Slot Configuration */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Ad Slot Configuration
           </h3>
           
@@ -333,9 +357,9 @@ export default function AddMediaDurationPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Slot Configuration</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3 text-sm md:text-base">Slot Configuration</h4>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -347,9 +371,9 @@ export default function AddMediaDurationPage() {
                         min="1"
                         value={slotsPerWeek}
                         onChange={(e) => setSlotsPerWeek(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-16 md:w-20 px-2 md:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm md:text-base"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                      <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300">
                         {slotsPerWeek * 15} seconds per week
                       </span>
                     </div>
@@ -358,10 +382,10 @@ export default function AddMediaDurationPage() {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Selected Weeks</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3 text-sm md:text-base">Selected Weeks</h4>
                 <div className="space-y-2">
                   {selectedWeeks.map((week, index) => (
-                    <div key={index} className="text-sm text-gray-600 dark:text-gray-300">
+                    <div key={index} className="text-xs md:text-sm text-gray-600 dark:text-gray-300">
                       Week of {new Date(week.startDate).toLocaleDateString('en-US', { 
                         month: 'short', 
                         day: 'numeric', 
@@ -371,7 +395,7 @@ export default function AddMediaDurationPage() {
                   ))}
                 </div>
                 <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                  <div className="text-xs md:text-sm text-gray-600 dark:text-gray-300">
                     Total Duration: {totalSlots * 15} seconds
                   </div>
                   <div className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-2">
@@ -384,17 +408,17 @@ export default function AddMediaDurationPage() {
         </div>
 
         {/* Slots Reserved Summary */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+            <span className="text-xs md:text-sm font-medium text-yellow-800 dark:text-yellow-200">
               Slots reserved until:
             </span>
-            <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            <span className="text-xs md:text-sm font-medium text-yellow-800 dark:text-yellow-200">
               {new Date(Date.now() + timeRemaining * 1000).toLocaleTimeString()}
             </span>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 text-xs md:text-sm">
             <div>
               <span className="text-yellow-700 dark:text-yellow-300">Base Rate:</span>
               <div className="font-medium text-yellow-800 dark:text-yellow-200">${baseRate.toFixed(2)} per slot</div>
@@ -407,7 +431,7 @@ export default function AddMediaDurationPage() {
               <span className="text-yellow-700 dark:text-yellow-300">Weeks Selected:</span>
               <div className="font-medium text-yellow-800 dark:text-yellow-200">{selectedWeeks.length}</div>
             </div>
-            <div>
+            <div className="col-span-2 md:col-span-1">
               <span className="text-yellow-700 dark:text-yellow-300">Slots per Week:</span>
               <div className="font-medium text-yellow-800 dark:text-yellow-200">
                 {selectedWeeks.map((week, index) => (
@@ -656,11 +680,11 @@ export default function AddMediaDurationPage() {
       </div>
 
       {/* Continue Button */}
-      <div className="flex justify-end mt-8">
+      <div className="flex justify-end mt-6 md:mt-8">
         <button
           onClick={handleContinue}
           disabled={!canContinue}
-          className={`px-6 py-3 rounded-lg shadow-soft transition-colors ${
+          className={`px-4 md:px-6 py-2 md:py-3 rounded-lg shadow-soft transition-colors text-sm md:text-base ${
             canContinue
               ? 'bg-gray-800 hover:bg-gray-900 text-white'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
