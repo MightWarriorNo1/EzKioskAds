@@ -56,8 +56,7 @@
   input[type="url"],
   select,
   textarea {
-    @apply text-gray-900 bg-white;
-    color: #111827 !important;
+    @apply text-gray-900 dark:text-white bg-white dark:bg-slate-800;
   }
   
   input[type="text"]::placeholder,
@@ -67,8 +66,7 @@
   input[type="tel"]::placeholder,
   input[type="url"]::placeholder,
   textarea::placeholder {
-    @apply text-gray-500;
-    color: #6b7280 !important;
+    @apply text-gray-500 dark:text-gray-400;
   }
 }
 

@@ -38,11 +38,13 @@ export default function Logo({
 
   return (
     <div className="flex items-center space-x-2">
-      <img 
-        src="/Logo.png" 
-        alt="Company Logo" 
-        className={`${logoClasses} object-contain`}
-      />
+      <div className={`${logoClasses} bg-black-80 dark:bg-white/90 rounded-lg p-1 flex items-center justify-center`}>
+        <img 
+          src="/Logo.png" 
+          alt="Company Logo" 
+          className="w-full h-full object-contain"
+        />
+      </div>
       {showText && (
         <span className={`font-bold ${getTextColor()} ${textClassName}`}>
           EZ Kiosk Ads

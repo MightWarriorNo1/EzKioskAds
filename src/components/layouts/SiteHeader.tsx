@@ -90,7 +90,7 @@ export default function SiteHeader() {
               size="xl" 
               showText={true} 
               textClassName="text-3xl tracking-tight" 
-              variant="dark"
+              // variant="dark"
             />
           </Link>
         </div>
