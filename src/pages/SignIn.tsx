@@ -14,6 +14,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [formError, setFormError] = useState<string>('');
   const [isVisible, setIsVisible] = useState(false);
   const [showCapsWarning, setShowCapsWarning] = useState(false);
   
@@ -41,6 +42,7 @@ export default function SignIn() {
     }
     
     setErrors(newErrors);
+    setFormError(''); // Clear form error when validating
     return Object.keys(newErrors).length === 0;
   };
 
@@ -52,6 +54,7 @@ export default function SignIn() {
     }
     
     setIsLoading(true);
+    setFormError(''); // Clear any previous form errors
 
     try {
       await signIn(email, password);
@@ -76,6 +79,9 @@ export default function SignIn() {
         }
       }
       
+      // Set form error for display on the form
+      setFormError(errorMessage);
+      // Also show notification for additional feedback
       addNotification('error', 'Sign In Failed', errorMessage);
     } finally {
       setIsLoading(false);
@@ -93,6 +99,21 @@ export default function SignIn() {
       </div>
 
       <form onSubmit={handleSubmit} className={`space-y-6 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} transition-all`}>
+            {formError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">
+                      Sign In Failed
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      {formError}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Email address
@@ -108,6 +129,7 @@ export default function SignIn() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: undefined });
+                    if (formError) setFormError('');
                   }}
                   className={`w-full pl-11 pr-4 py-3 border-2 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 hover:border-gray-400 dark:hover:border-gray-600 ${
                     errors.email 
@@ -141,6 +163,7 @@ export default function SignIn() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) setErrors({ ...errors, password: undefined });
+                    if (formError) setFormError('');
                   }}
                   className={`w-full pl-11 pr-12 py-3 border-2 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 hover:border-gray-400 dark:hover:border-gray-600 ${
                     errors.password 
