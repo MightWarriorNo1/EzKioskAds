@@ -26,11 +26,18 @@ async function mapSupabaseUserToUser(supabaseUser: SupabaseUser): Promise<User> 
   let role: UserRole = (metadata.role as UserRole) ?? 'client';
 
   try {
-    const { data: profile, error } = await supabase
+    // Add timeout to prevent hanging
+    const profilePromise = supabase
       .from('profiles')
       .select('role')
       .eq('id', supabaseUser.id)
       .single();
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Profile lookup timeout')), 5000)
+    );
+    
+    const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
     
     if (!error && profile && (profile as any).role) {
       role = (profile as any).role as UserRole;
@@ -70,27 +77,114 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let initializationComplete = false;
 
     const initialize = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session as Session | null;
-      if (isMounted && session?.user) {
-        const u = await mapSupabaseUserToUser(session.user);
-        if (isMounted) setUser(u);
+      try {
+        console.log('Auth: Initializing authentication...');
+        
+        // Add overall timeout to prevent infinite loading
+        const initPromise = (async () => {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Auth: Error getting session:', error);
+            if (isMounted) {
+              setUser(null);
+              setIsLoading(false);
+            }
+            return;
+          }
+          
+          const session = data.session as Session | null;
+          console.log('Auth: Session found:', !!session);
+          
+          if (isMounted && session?.user) {
+            try {
+              console.log('Auth: Mapping user data...');
+              const u = await mapSupabaseUserToUser(session.user);
+              if (isMounted) {
+                setUser(u);
+                console.log('Auth: User set successfully:', u.email);
+              }
+            } catch (profileError) {
+              console.error('Auth: Profile mapping error during initialization:', profileError);
+              // Fallback to basic user info
+              const basicUser: User = {
+                id: session.user.id,
+                email: session.user.email ?? '',
+                name: session.user.user_metadata?.name,
+                role: (session.user.user_metadata?.role as UserRole) || 'client',
+                avatar: session.user.user_metadata?.avatar,
+              };
+              if (isMounted) {
+                setUser(basicUser);
+                console.log('Auth: Fallback user set:', basicUser.email);
+              }
+            }
+          } else if (isMounted) {
+            console.log('Auth: No session found, setting user to null');
+            setUser(null);
+          }
+        })();
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000)
+        );
+        
+        await Promise.race([initPromise, timeoutPromise]);
+        
+      } catch (error) {
+        console.error('Auth: Initialization error:', error);
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          initializationComplete = true;
+          setIsLoading(false);
+          console.log('Auth: Initialization complete, loading set to false');
+        }
       }
-      if (isMounted) setIsLoading(false);
     };
 
     initialize();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth: Auth state change:', event, !!session);
+      
       if (!isMounted) return;
-      if (session?.user) {
-        const u = await mapSupabaseUserToUser(session.user);
-        if (isMounted) setUser(u);
-      } else {
-        setUser(null);
+      
+      // Only process auth state changes after initial load
+      if (!initializationComplete) {
+        console.log('Auth: Skipping auth state change during initialization');
+        return;
       }
+      
+      if (session?.user) {
+        try {
+          console.log('Auth: Processing auth state change for user:', session.user.email);
+          const u = await mapSupabaseUserToUser(session.user);
+          if (isMounted) setUser(u);
+        } catch (profileError) {
+          console.error('Auth: Profile mapping error during auth state change:', profileError);
+          // Fallback to basic user info
+          const basicUser: User = {
+            id: session.user.id,
+            email: session.user.email ?? '',
+            name: session.user.user_metadata?.name,
+            role: (session.user.user_metadata?.role as UserRole) || 'client',
+            avatar: session.user.user_metadata?.avatar,
+          };
+          if (isMounted) setUser(basicUser);
+        }
+      } else {
+        console.log('Auth: No session in auth state change, setting user to null');
+        if (isMounted) setUser(null);
+      }
+      
+      // Set loading to false after auth state change
+      if (isMounted) setIsLoading(false);
     });
 
     return () => {
@@ -100,25 +194,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error('Supabase auth error:', error);
       throw error;
     }
-    if (data.user) {
-      try {
-        const u = await mapSupabaseUserToUser(data.user);
-        setUser(u);
-      } catch (profileError) {
-        console.error('Profile mapping error:', profileError);
-        // Still set user even if profile mapping fails
-        setUser({
-          id: data.user.id,
-          email: data.user.email ?? '',
-          role: 'client',
-        });
-      }
-    }
+    // The onAuthStateChange listener will handle setting the user state
+    // No need to manually set user here as it will be handled by the listener
   };
 
   const signOut = async () => {

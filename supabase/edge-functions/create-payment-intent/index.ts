@@ -35,7 +35,7 @@ serve(async (req: Request) => {
     })
 
     const body = await req.json()
-    const { amount, currency = 'usd', metadata, recaptchaToken, captchaRequired } = body
+    const { amount, currency = 'usd', metadata, recaptchaToken, captchaRequired, setupForFutureUse = false } = body
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return new Response(JSON.stringify({ error: 'Invalid amount' }), {
@@ -76,12 +76,19 @@ serve(async (req: Request) => {
       }
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntentOptions: any = {
       amount, // in the smallest currency unit (cents)
       currency,
       automatic_payment_methods: { enabled: true },
       metadata,
-    })
+    }
+
+    // If setup for future use, add setup_future_usage
+    if (setupForFutureUse) {
+      paymentIntentOptions.setup_future_usage = 'off_session'
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions)
 
     return new Response(
       JSON.stringify({ clientSecret: paymentIntent.client_secret }),

@@ -24,6 +24,8 @@ import { Elements, useElements, useStripe, PaymentElement } from '@stripe/react-
 import { loadStripe } from '@stripe/stripe-js';
 import { BillingService } from '../services/billingService';
 import { CustomAdsService } from '../services/customAdsService';
+import PaymentMethodSelector from '../components/PaymentMethodSelector';
+import { PaymentMethod } from '../types/database';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 interface ServiceTile {
@@ -97,13 +99,36 @@ export default function CustomAdsPage() {
   const [formErrors, setFormErrors] = useState<Partial<OrderFormData>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentStep, setPaymentStep] = useState<'form' | 'pay'>('form');
+  const [paymentStep, setPaymentStep] = useState<'form' | 'pay' | 'method'>('form');
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
   const { user }=useAuth();
   const navigate=useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
+  const loadPaymentMethods = async () => {
+    if (!user) return;
+    
+    setIsLoadingPaymentMethods(true);
+    try {
+      const methods = await BillingService.getPaymentMethods(user.id);
+      setPaymentMethods(methods);
+      
+      // Set default payment method if available
+      const defaultMethod = methods.find(m => m.is_default);
+      if (defaultMethod) {
+        setSelectedPaymentMethodId(defaultMethod.id);
+      }
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+    } finally {
+      setIsLoadingPaymentMethods(false);
+    }
+  };
 
   const handleServiceSelect = (service: ServiceTile) => {
     if (!user) {
@@ -215,7 +240,39 @@ export default function CustomAdsPage() {
     setIsUploading(true);
     
     try {
-      if (!selectedService) throw new Error('No service selected');
+      if (!selectedService || !user) throw new Error('No service selected or user not authenticated');
+      
+      // Upload files if any
+      const uploadedFiles: any[] = [];
+      for (const file of formData.files) {
+        const uploadedFile = await CustomAdsService.uploadFiles(user.id, [file]);
+        uploadedFiles.push(...uploadedFile);
+      }
+
+      setFormData(prev => ({ ...prev, files: uploadedFiles }));
+
+      // Load payment methods and show payment method selection
+      await loadPaymentMethods();
+      setPaymentStep('method');
+    } catch (error) {
+      alert('Error submitting order. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePaymentMethodSelect = (methodId: string | null) => {
+    setSelectedPaymentMethodId(methodId);
+  };
+
+  const handleAddNewMethod = async () => {
+    if (!selectedService || !user) return;
+    
+    setSelectedPaymentMethodId(null);
+    setIsUploading(true);
+    setPaymentMessage(null);
+
+    try {
       const intent = await BillingService.createPaymentIntent({
         amount: Math.round(selectedService.price * 100),
         currency: 'usd',
@@ -223,18 +280,85 @@ export default function CustomAdsPage() {
           serviceId: selectedService.id,
           email: formData.email,
         },
-        recaptchaToken: recaptchaToken,
+        recaptchaToken: recaptchaToken || undefined,
+        setupForFutureUse: true, // Setup for future use when adding new method
       });
+
       if (!intent?.clientSecret) {
-        alert('Unable to start payment. Please try again.');
-      } else {
-        setClientSecret(intent.clientSecret);
-        setPaymentStep('pay');
+        setPaymentMessage('Unable to start payment. Please try again.');
+        return;
       }
+
+      setClientSecret(intent.clientSecret);
+      setPaymentStep('pay');
     } catch (error) {
-      alert('Error submitting order. Please try again.');
+      console.error('Error creating payment intent:', error);
+      setPaymentMessage('Error creating payment intent. Please try again.');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handlePaymentWithSavedMethod = async () => {
+    if (!selectedService || !user || !selectedPaymentMethodId) return;
+
+    setIsUploading(true);
+    setPaymentMessage(null);
+
+    try {
+      const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentMethodId);
+      if (!selectedMethod) throw new Error('Selected payment method not found');
+
+      const intent = await BillingService.createPaymentIntentWithPaymentMethod({
+        amount: selectedService.price,
+        currency: 'usd',
+        paymentMethodId: selectedMethod.stripe_payment_method_id,
+        metadata: {
+          serviceId: selectedService.id,
+          email: formData.email,
+        },
+        recaptchaToken: recaptchaToken || undefined,
+      });
+
+      if (!intent?.clientSecret) {
+        setPaymentMessage('Unable to process payment. Please try again.');
+        return;
+      }
+
+      setClientSecret(intent.clientSecret);
+      setPaymentStep('pay');
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      setPaymentMessage('Error processing payment. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSavePaymentMethod = async (stripePaymentMethodId: string) => {
+    if (!user) return;
+
+    try {
+      // Save to our database using the Supabase function
+      const savedMethod = await BillingService.savePaymentMethod({
+        user_id: user.id,
+        stripe_payment_method_id: stripePaymentMethodId,
+        type: 'card', // Default to card type
+        last4: undefined, // Will be filled by the function
+        brand: undefined, // Will be filled by the function
+        expiry_month: undefined, // Will be filled by the function
+        expiry_year: undefined, // Will be filled by the function
+      });
+
+      if (savedMethod) {
+        // Reload payment methods to get the updated list
+        await loadPaymentMethods();
+      } else {
+        throw new Error('Failed to save payment method');
+      }
+    } catch (error) {
+      console.error('Error saving payment method:', error);
+      throw error;
     }
   };
 
@@ -549,17 +673,74 @@ export default function CustomAdsPage() {
               </form>
               )}
 
+              {paymentStep === 'method' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      Choose Payment Method
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Select a saved payment method or add a new one
+                    </p>
+                  </div>
+
+                  {isLoadingPaymentMethods ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-2 text-gray-600 dark:text-gray-400">Loading payment methods...</p>
+                    </div>
+                  ) : (
+                    <PaymentMethodSelector
+                      paymentMethods={paymentMethods}
+                      selectedMethodId={selectedPaymentMethodId}
+                      onMethodSelect={handlePaymentMethodSelect}
+                      onAddNewMethod={handleAddNewMethod}
+                      amount={selectedService.price}
+                    />
+                  )}
+
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={() => setPaymentStep('form')}
+                    >
+                      Back
+                    </Button>
+                    
+                    {selectedPaymentMethodId && (
+                      <Button
+                        onClick={handlePaymentWithSavedMethod}
+                        disabled={isUploading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {isUploading ? 'Processing...' : `Pay $${selectedService.price}`}
+                      </Button>
+                    )}
+                  </div>
+
+                  {paymentMessage && (
+                    <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                      {paymentMessage}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {paymentStep === 'pay' && clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <StripePaySection
                     amount={selectedService.price}
                     email={formData.email}
-                    onBack={() => setPaymentStep('form')}
+                    onBack={() => setPaymentStep('method')}
                     message={paymentMessage}
                     setMessage={setPaymentMessage}
+                    onSavePaymentMethod={selectedPaymentMethodId === null ? handleSavePaymentMethod : undefined}
                     onSuccess={async () => {
                       try {
                         if (!user) return;
+                        
+                        // Save the order
                         await CustomAdsService.createOrder({
                           userId: user.id,
                           serviceKey: selectedService.id,
@@ -572,6 +753,7 @@ export default function CustomAdsPage() {
                           files: formData.files,
                           totalAmount: selectedService.price,
                         });
+                        
                         setPaymentMessage('Payment succeeded and your order has been saved.');
                       } catch (e) {
                         setPaymentMessage('Payment succeeded, but saving your order failed. Please contact support.');
@@ -595,6 +777,7 @@ function StripePaySection(props: {
   message: string | null;
   setMessage: (m: string | null) => void;
   onSuccess?: () => void | Promise<void>;
+  onSavePaymentMethod?: (paymentMethodId: string) => Promise<void>;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -605,6 +788,7 @@ function StripePaySection(props: {
     if (!stripe || !elements) return;
     setIsProcessing(true);
     props.setMessage(null);
+    
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
@@ -613,13 +797,26 @@ function StripePaySection(props: {
       },
       redirect: 'if_required',
     });
+    
     if (error) {
       props.setMessage(error.message || 'Payment failed.');
       setIsProcessing(false);
       return;
     }
+    
     if (paymentIntent && paymentIntent.status === 'succeeded') {
       props.setMessage('Payment succeeded!');
+      
+      // Save the payment method if the callback is provided
+      if (props.onSavePaymentMethod && paymentIntent.payment_method) {
+        try {
+          await props.onSavePaymentMethod(paymentIntent.payment_method as string);
+        } catch (saveError) {
+          console.error('Error saving payment method:', saveError);
+          // Don't fail the payment if saving the method fails
+        }
+      }
+      
       if (props.onSuccess) {
         await Promise.resolve(props.onSuccess());
       }

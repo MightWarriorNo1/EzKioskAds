@@ -39,14 +39,23 @@ export default function Analytics() {
   // Fetch analytics data on component mount
   useEffect(() => {
     if (user?.id) {
-      fetchAnalyticsData();
+      fetchAnalyticsData(true); // Initial load
       fetchCampaigns();
     }
-  }, [user, timeRange, selectedCampaign]);
+  }, [user]);
 
-  const fetchAnalyticsData = async () => {
+  // Fetch analytics data when time range or campaign changes
+  useEffect(() => {
+    if (user?.id && timeRange && selectedCampaign) {
+      fetchAnalyticsData(false); // Subsequent loads
+    }
+  }, [timeRange, selectedCampaign]);
+
+  const fetchAnalyticsData = async (isInitialLoad = false) => {
     try {
-      setIsLoading(true);
+      if (isInitialLoad) {
+        setIsLoading(true);
+      }
       
       // Fetch user's campaigns
       const userCampaigns = await CampaignService.getUserCampaigns(user!.id);
@@ -88,7 +97,9 @@ export default function Analytics() {
       console.error('Error fetching analytics data:', error);
       addNotification('error', 'Analytics Error', 'Failed to load analytics data');
     } finally {
-      setIsLoading(false);
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
     }
   };
 

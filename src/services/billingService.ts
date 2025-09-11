@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { PaymentMethod } from '../types/database';
 
 export interface BillingCampaign {
   id: string;
@@ -33,12 +34,13 @@ export interface PaymentHistory {
 }
 
 export class BillingService {
-  static async createPaymentIntent(params: { amount: number; currency?: string; metadata?: Record<string, string>; recaptchaToken?: string }): Promise<{ clientSecret: string } | null> {
+  static async createPaymentIntent(params: { amount: number; currency?: string; metadata?: Record<string, string>; recaptchaToken?: string; setupForFutureUse?: boolean }): Promise<{ clientSecret: string } | null> {
     try {
       const requestBody: Record<string, unknown> = {
         amount: Math.round(params.amount),
         currency: params.currency || 'usd',
         metadata: params.metadata,
+        setupForFutureUse: params.setupForFutureUse || false,
       };
       if (params.recaptchaToken) {
         requestBody.recaptchaToken = params.recaptchaToken;
@@ -290,6 +292,142 @@ export class BillingService {
         activeSubscriptions: 0,
         monthlySpend: 0
       };
+    }
+  }
+
+  // Payment Method Management Functions
+  static async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+    try {
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      return [];
+    }
+  }
+
+  static async savePaymentMethod(paymentMethodData: {
+    user_id: string;
+    stripe_payment_method_id: string;
+    type: 'card' | 'bank_account';
+    last4?: string;
+    brand?: string;
+    expiry_month?: number;
+    expiry_year?: number;
+  }): Promise<PaymentMethod | null> {
+    try {
+      // Use Supabase function to save payment method
+      const { data, error } = await supabase.functions.invoke('save-payment-method', {
+        body: {
+          paymentMethodId: paymentMethodData.stripe_payment_method_id,
+          userId: paymentMethodData.user_id
+        }
+      });
+
+      if (error) {
+        console.error('Error calling save-payment-method function:', error);
+        return null;
+      }
+
+      return data?.paymentMethod || null;
+    } catch (error) {
+      console.error('Error saving payment method:', error);
+      return null;
+    }
+  }
+
+  static async setDefaultPaymentMethod(paymentMethodId: string): Promise<boolean> {
+    try {
+      // Get the payment method to find the user_id
+      const { data: paymentMethod, error: fetchError } = await supabase
+        .from('payment_methods')
+        .select('user_id')
+        .eq('id', paymentMethodId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Set all payment methods for this user to not default
+      await supabase
+        .from('payment_methods')
+        .update({ is_default: false })
+        .eq('user_id', paymentMethod.user_id);
+
+      // Set the selected payment method as default
+      const { error } = await supabase
+        .from('payment_methods')
+        .update({ is_default: true })
+        .eq('id', paymentMethodId);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
+      return false;
+    }
+  }
+
+  static async deletePaymentMethod(paymentMethodId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', paymentMethodId);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      return false;
+    }
+  }
+
+  static async createPaymentIntentWithPaymentMethod(params: { 
+    amount: number; 
+    currency?: string; 
+    paymentMethodId?: string;
+    metadata?: Record<string, string>; 
+    recaptchaToken?: string 
+  }): Promise<{ clientSecret: string } | null> {
+    try {
+      const requestBody: Record<string, unknown> = {
+        amount: Math.round(params.amount),
+        currency: params.currency || 'usd',
+        metadata: params.metadata,
+      };
+      
+      if (params.paymentMethodId) {
+        requestBody.paymentMethodId = params.paymentMethodId;
+      }
+      
+      if (params.recaptchaToken) {
+        requestBody.recaptchaToken = params.recaptchaToken;
+        requestBody.captchaRequired = true;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: requestBody,
+      });
+
+      if (error) {
+        console.error('Failed to create payment intent', error);
+        return null;
+      }
+
+      return { clientSecret: (data as any)?.clientSecret };
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      return null;
     }
   }
 }

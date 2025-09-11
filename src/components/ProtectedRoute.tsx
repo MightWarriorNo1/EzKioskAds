@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import LoadingSpinner from './shared/LoadingSpinner';
@@ -10,12 +10,33 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  const [fallbackTimeout, setFallbackTimeout] = useState(false);
+
+  // Fallback timeout to prevent infinite loading
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        console.log('ProtectedRoute: Fallback timeout triggered');
+        setFallbackTimeout(true);
+      }, 15000); // 15 second fallback timeout
+
+      return () => clearTimeout(timeout);
+    } else {
+      setFallbackTimeout(false);
+    }
+  }, [isLoading]);
+
+  // If loading for too long, show error or redirect
+  if (isLoading && fallbackTimeout) {
+    console.log('ProtectedRoute: Fallback timeout reached, redirecting to signin');
+    return <Navigate to="/signin" replace />;
+  }
 
   if (isLoading) {
     return (
       <LoadingSpinner 
         size="lg" 
-        text="Loading..." 
+        text="Authenticating..." 
         fullScreen 
       />
     );

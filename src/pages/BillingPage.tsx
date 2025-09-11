@@ -335,7 +335,7 @@ export default function BillingPage() {
 
       {/* Tabs */}
       <div className="mb-8">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -343,7 +343,7 @@ export default function BillingPage() {
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab
                   ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 dark:text-white hover:text-gray-900'
               }`}
             >
               {tab}

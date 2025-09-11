@@ -67,11 +67,13 @@ export default function AnalyticsPage() {
   };
 
   // Fetch analytics data
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = async (isInitialLoad = false) => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      }
       setError(null);
 
       // Get user's campaigns
@@ -205,14 +207,25 @@ export default function AnalyticsPage() {
       setError('Failed to load analytics data. Please try again.');
       addNotification('error', 'Analytics Error', 'Failed to load analytics data. Please try again.');
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      }
     }
   };
 
   // Fetch data on component mount and when date range changes
   useEffect(() => {
-    fetchAnalyticsData();
-  }, [user, dateRange]);
+    if (user) {
+      fetchAnalyticsData(true); // Initial load
+    }
+  }, [user]);
+
+  // Fetch data when date range changes (without showing loading state)
+  useEffect(() => {
+    if (user && dateRange) {
+      fetchAnalyticsData(false); // Subsequent loads
+    }
+  }, [dateRange]);
 
   // Handle date range change
   const handleDateRangeChange = (range: string) => {
@@ -250,7 +263,7 @@ export default function AnalyticsPage() {
             </div>
             <p className="text-gray-600 mb-4">{error}</p>
             <button 
-              onClick={fetchAnalyticsData}
+              onClick={() => fetchAnalyticsData(true)}
               className="btn-primary"
             >
               Try Again
@@ -266,17 +279,29 @@ export default function AnalyticsPage() {
       title="Analytics"
       subtitle="Performance metrics and insights for your campaigns"
     >
-      {/* Date Range Selector */}
-      <div className="flex justify-end mb-8">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+      {/* Date Range Selector and Proof-of-Play Link */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Campaign Analytics</h2>
+          <a
+            href="/client/proof-of-play"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            View Proof-of-Play Reports
+          </a>
+        </div>
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           {dateRanges.map((range) => (
             <button
               key={range}
               onClick={() => handleDateRangeChange(range)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 dateRange === range
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-700 dark:text-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-white'
               }`}
             >
               {range}
@@ -287,39 +312,39 @@ export default function AnalyticsPage() {
 
       {/* Analytics Overview */}
       <div className="grid md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Impressions</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Impressions</h3>
           <div className="text-3xl font-bold text-gray-900 mb-2">
             {formatNumber(analyticsData?.totalImpressions)}
           </div>
-          <p className="text-gray-600 text-sm">People who viewed your ads</p>
-          <div className="w-full h-16 bg-gray-100 rounded mt-4"></div>
+          <p className="text-gray-600 dark:text-white text-sm">People who viewed your ads</p>
+          <div className="w-full h-16 bg-gray-100 dark:bg-gray-700 rounded mt-4"></div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Engagements</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Total Engagements</h3>
           <div className="text-3xl font-bold text-gray-900 mb-2">
             {formatNumber(analyticsData?.totalEngagements)}
           </div>
-          <p className="text-gray-600 text-sm">Interactions with your ads</p>
-          <div className="w-full h-16 bg-gray-100 rounded mt-4"></div>
+          <p className="text-gray-600 dark:text-white text-sm">Interactions with your ads</p>
+          <div className="w-full h-16 bg-gray-100 dark:bg-gray-700 rounded mt-4"></div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Engagement Rate</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Engagement Rate</h3>
           <div className="text-3xl font-bold text-gray-900 mb-2">
             {formatPercentage(analyticsData?.engagementRate)}%
           </div>
-          <p className="text-gray-600 text-sm">Percentage of impressions that resulted in engagement</p>
-          <div className="w-full h-16 bg-gray-100 rounded mt-4"></div>
+          <p className="text-gray-600 dark:text-white text-sm">Percentage of impressions that resulted in engagement</p>
+          <div className="w-full h-16 bg-gray-100 dark:bg-gray-700 rounded mt-4"></div>
         </div>
       </div>
 
       {/* Charts Section */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Top Performing Kiosks */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Performing Kiosks</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Performing Kiosks</h3>
           <div className="space-y-4">
             {analyticsData?.topKiosks.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -334,7 +359,7 @@ export default function AnalyticsPage() {
                 
                 return (
                   <div key={kiosk.location} className="flex items-center space-x-4">
-                    <div className="w-20 text-sm text-gray-600 truncate" title={kiosk.location}>
+                    <div className="w-20 text-sm text-gray-600 dark:text-white truncate" title={kiosk.location}>
                       {kiosk.location}
                     </div>
                 <div className="flex-1">
@@ -349,7 +374,7 @@ export default function AnalyticsPage() {
                         ></div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-white">
                       {formatNumber(kiosk.impressions)} / {formatNumber(kiosk.clicks)}
                 </div>
               </div>
@@ -357,7 +382,7 @@ export default function AnalyticsPage() {
               })
             )}
           </div>
-          <div className="flex items-center space-x-4 mt-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 mt-4 text-sm text-gray-600 dark:text-white">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-blue-200 rounded"></div>
               <span>Impressions</span>
@@ -370,8 +395,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Campaign Performance */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Campaign Performance</h3>
+          <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Campaign Performance</h3>
           <div className="space-y-4">
             {analyticsData?.campaignPerformance.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -386,7 +411,7 @@ export default function AnalyticsPage() {
                 
                 return (
                   <div key={campaign.campaignId} className="flex items-center space-x-4">
-                    <div className="w-24 text-sm text-gray-600 truncate" title={campaign.campaignName}>
+                    <div className="w-24 text-sm text-gray-600 dark:text-white truncate" title={campaign.campaignName}>
                       {campaign.campaignName}
                     </div>
                 <div className="flex-1">
@@ -401,7 +426,7 @@ export default function AnalyticsPage() {
                         ></div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-white">
                       {formatNumber(campaign.impressions)} / {formatNumber(campaign.clicks)}
                 </div>
               </div>
@@ -409,7 +434,7 @@ export default function AnalyticsPage() {
               })
             )}
           </div>
-          <div className="flex items-center space-x-4 mt-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 mt-4 text-sm text-gray-600 dark:text-white">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-blue-200 rounded"></div>
               <span>Impressions</span>
@@ -423,18 +448,18 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Daily Performance */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-12">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Daily Performance</h3>
+      <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6 mb-12">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Daily Performance</h3>
         <div className="relative">
           {analyticsData?.dailyPerformance.length === 0 ? (
-          <div className="w-full h-48 bg-gray-100 rounded flex items-center justify-center">
+          <div className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
             <div className="text-center">
                 <div className="text-2xl font-bold text-gray-400 mb-2">No Data Available</div>
                 <p className="text-gray-500">No daily performance data available for the selected period.</p>
               </div>
             </div>
           ) : (
-            <div className="w-full h-48 bg-gray-100 rounded flex items-center justify-center">
+            <div className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-400 mb-2">Chart Coming Soon</div>
                 <p className="text-gray-500">Daily performance chart visualization will be available soon.</p>
@@ -449,8 +474,8 @@ export default function AnalyticsPage() {
 
       {/* Audience Demographics */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Audience Demographics</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Audience Demographics</h3>
           <div className="w-48 h-48 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
             <div className="text-center text-gray-500">
               <div className="text-2xl font-bold">Pie Chart</div>
@@ -459,19 +484,19 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Key Insights</h3>
+        <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Key Insights</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Primary Audience</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Primary Audience</h4>
               <p className="text-gray-600 text-sm">Your ads are resonating most with the 25-34 age group, which makes up 35% of your audience.</p>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Engagement by Age</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Engagement by Age</h4>
               <p className="text-gray-600 text-sm">The 18-24 age group has the highest engagement rate at 15%, followed by the 25-34 age group at 12%.</p>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Recommendation</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Recommendation</h4>
               <p className="text-gray-600 text-sm">Consider creating targeted campaigns for the 25-34 age group to maximize ROI, while also developing content that appeals to the highly engaged 18-24 demographic.</p>
             </div>
           </div>
@@ -481,8 +506,8 @@ export default function AnalyticsPage() {
       {/* Campaign Analytics */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Campaign Analytics</h3>
-          <button className="text-gray-600 hover:text-gray-900 underline">View All Campaigns</button>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Campaign Analytics</h3>
+          <button className="text-gray-600 hover:text-gray-900 dark:text-white underline">View All Campaigns</button>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {analyticsData?.campaignPerformance.length === 0 ? (
@@ -491,7 +516,7 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             analyticsData?.campaignPerformance.slice(0, 2).map((campaign) => (
-              <div key={campaign.campaignId} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={campaign.campaignId} className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
                 <h4 className="font-semibold text-gray-900 mb-4">{campaign.campaignName}</h4>
             <div className="space-y-2 text-sm text-gray-600">
                   <div>Impressions: {formatNumber(campaign.impressions)}</div>
@@ -511,8 +536,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Performance Insights */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Performance Insights</h3>
+      <div className="bg-[rgb(var(--surface))] dark:bg-gray-800 rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Performance Insights</h3>
         <div className="space-y-4">
           {analyticsData?.campaignPerformance.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -521,7 +546,7 @@ export default function AnalyticsPage() {
           ) : (
             <>
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Top Performing Campaign</h4>
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Top Performing Campaign</h4>
                 <p className="text-gray-600">
                   {analyticsData?.campaignPerformance && analyticsData.campaignPerformance.length > 0 ? (
                     <>
@@ -534,7 +559,7 @@ export default function AnalyticsPage() {
                 </p>
           </div>
           <div>
-                <h4 className="font-medium text-gray-900 mb-2">Overall Performance</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Overall Performance</h4>
                 <p className="text-gray-600">
                   Your campaigns have generated {formatNumber(analyticsData?.totalImpressions)} total impressions with an overall engagement rate of {formatPercentage(analyticsData?.engagementRate)}%.
                   {analyticsData?.topKiosks && analyticsData.topKiosks.length > 0 && ` Your top performing location is ${analyticsData.topKiosks[0].location} with ${formatNumber(analyticsData.topKiosks[0].impressions)} impressions.`}

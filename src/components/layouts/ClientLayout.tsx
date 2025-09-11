@@ -10,7 +10,8 @@ import {
   X,
   LogOut,
   User,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationToast from '../NotificationToast';
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Upload Ads', href: '/client/upload', icon: Upload },
   { name: 'Campaigns', href: '/client/campaigns', icon: Calendar },
   { name: 'Analytics', href: '/client/analytics', icon: BarChart3 },
+  { name: 'Proof-of-Play', href: '/client/proof-of-play', icon: FileText },
   { name: 'Billing', href: '/client/billing', icon: CreditCard },
   { name: 'Marketplace', href: '/client/marketplace', icon: ShoppingCart },
 ];

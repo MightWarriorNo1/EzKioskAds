@@ -236,12 +236,12 @@ export default function ProfilePage() {
             {profile && (
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-                  <div className="text-sm text-gray-900 capitalize">{profile.role}</div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Account Type</label>
+                  <div className="text-sm text-gray-900 dark:text-white capitalize">{profile.role}</div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subscription</label>
-                  <div className="text-sm text-gray-900 capitalize">{profile.subscription_tier}</div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Subscription</label>
+                  <div className="text-sm text-gray-900  dark:text-white capitalize">{profile.subscription_tier}</div>
                 </div>
               </div>
             )}

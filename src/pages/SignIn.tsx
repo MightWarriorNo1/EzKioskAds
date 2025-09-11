@@ -6,6 +6,7 @@ import AuthLayout from '../components/layouts/AuthLayout';
 import { supabase } from '../lib/supabaseClient';
 import { useNotification } from '../contexts/NotificationContext';
 import GoogleIcon from '../components/icons/GoogleIcon';
+import AuthRedirect from '../components/AuthRedirect';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -54,27 +55,11 @@ export default function SignIn() {
 
     try {
       await signIn(email, password);
-
-      // Determine redirect based on role from profiles table
-      const { data: userRes } = await supabase.auth.getUser();
-      const userId = userRes.user?.id;
-      let role: string = 'client';
-      if (userId) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        if (!profileError && profile && (profile as any).role) {
-          role = (profile as any).role as string;
-        }
-      }
-
-      if (role === 'admin') navigate('/admin');
-      else if (role === 'host') navigate('/host');
-      else navigate('/client');
       
-      addNotification('success', 'Welcome!', 'Successfully signed in to your account.');
+      // Wait a moment for the auth state to update
+      setTimeout(() => {
+        addNotification('success', 'Welcome!', 'Successfully signed in to your account.');
+      }, 100);
     } catch (error: any) {
       console.error('Sign-in error:', error);
       let errorMessage = 'Invalid email or password. Please try again.';
@@ -101,6 +86,7 @@ export default function SignIn() {
 
   return (
     <AuthLayout>
+      <AuthRedirect />
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome back</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>

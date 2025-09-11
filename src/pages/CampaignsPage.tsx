@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, RefreshCw, ArrowRight, CheckCircle } from 'lucide-react';
+import { Plus, RefreshCw, ArrowRight, CheckCircle, MapPin, List, Layout } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layouts/DashboardLayout';
 import { CampaignService, Campaign } from '../services/campaignService';
 import { useAuth } from '../contexts/AuthContext';
+import LeafletMap from '../components/MapContainer';
 
 export default function CampaignsPage() {
   const location = useLocation() as { state?: { message?: string; campaignData?: any } };
@@ -15,6 +16,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map' | 'split'>('split');
 
   useEffect(() => {
     if (location.state?.message) {
@@ -108,22 +110,62 @@ export default function CampaignsPage() {
         </div>
       )}
 
-      {/* Campaign Filters */}
+      {/* Campaign Filters and View Toggle */}
       <div className="mb-8">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          {tabs.map((tab) => (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Campaign Filters */}
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-white text-gray-900 dark:bg-white  shadow-sm'
+                    : 'text-gray-600 dark:text-white hover:text-gray-900'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === tab
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                viewMode === 'list'
+                  ? 'bg-white text-gray-900 dark:bg-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-white'
               }`}
             >
-              {tab}
+              <List className="h-4 w-4" />
+              <span>List</span>
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                viewMode === 'map'
+                  ? 'bg-white text-gray-900 dark:bg-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-white'
+              }`}
+            >
+              <MapPin className="h-4 w-4" />
+              <span>Map</span>
+            </button>
+            <button
+              onClick={() => setViewMode('split')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                viewMode === 'split'
+                  ? 'bg-white text-gray-900 dark:bg-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-white'
+              }`}
+            >
+              <Layout className="h-4 w-4" />
+              <span>Split</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -146,7 +188,7 @@ export default function CampaignsPage() {
         </button>
       </div>
 
-      {/* Campaigns Grid */}
+      {/* Campaigns Display */}
       {loading ? (
         // Loading state
         <div className="grid md:grid-cols-2 gap-6">
@@ -188,49 +230,147 @@ export default function CampaignsPage() {
           )}
         </div>
       ) : (
-        // Campaign Cards
-        <div className="grid md:grid-cols-2 gap-6">
-          {filteredCampaigns.map((campaign) => (
-            <div key={campaign.id} className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
-                    {campaign.name || `Campaign ${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
-                  </p>
+        <>
+          {viewMode === 'list' && (
+            // List View
+            <div className="grid md:grid-cols-2 gap-6">
+              {filteredCampaigns.map((campaign) => (
+                <div key={campaign.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">
+                        {campaign.name || `Campaign ${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
+                      </p>
+                    </div>
+                    <span className={`${getStatusColor(campaign.status)} text-white text-xs px-2 py-1 rounded capitalize`}>
+                      {campaign.status}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-600 mb-4">
+                    <div className="flex justify-between">
+                      <span>Kiosks:</span>
+                      <span>{campaign.kiosk_count}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Duration:</span>
+                      <span>{campaign.total_slots * 15} seconds</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Price:</span>
+                      <span>{formatCurrency(campaign.total_cost)}</span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => navigate(`/client/campaigns/${campaign.id}`)}
+                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <span>View Details</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
                 </div>
-                <span className={`${getStatusColor(campaign.status)} text-white text-xs px-2 py-1 rounded capitalize`}>
-                  {campaign.status}
-                </span>
-              </div>
-              
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <div className="flex justify-between">
-                  <span>Kiosks:</span>
-                  <span>{campaign.kiosk_count}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Duration:</span>
-                  <span>{campaign.total_slots * 15} seconds</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Price:</span>
-                  <span>{formatCurrency(campaign.total_cost)}</span>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => navigate(`/client/campaigns/${campaign.id}`)}
-                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
-              >
-                <span>View Details</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {viewMode === 'map' && (
+            // Map View
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Campaign Locations</h3>
+              </div>
+              <div className="h-[500px] lg:h-[600px] w-full">
+                <LeafletMap 
+                  center={[33.5689, -117.1865]}
+                  zoom={11}
+                  className="h-full w-full"
+                  kioskData={[]}
+                />
+              </div>
+            </div>
+          )}
+
+          {viewMode === 'split' && (
+            // Split View - Map and List side by side
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Map Section */}
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden order-2 lg:order-1">
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Campaign Locations</h3>
+                </div>
+                <div className="h-[400px] lg:h-[500px] w-full">
+                  <LeafletMap 
+                    center={[33.5689, -117.1865]}
+                    zoom={11}
+                    className="h-full w-full"
+                    kioskData={[]}
+                  />
+                </div>
+              </div>
+
+              {/* List Section */}
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden order-1 lg:order-2">
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Campaigns ({filteredCampaigns.length})</h3>
+                </div>
+                <div className="max-h-[400px] lg:max-h-[500px] overflow-y-auto">
+                  {filteredCampaigns.length > 0 ? (
+                    <div className="divide-y divide-gray-200">
+                      {filteredCampaigns.map((campaign) => (
+                        <div key={campaign.id} className="p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 truncate">
+                                {campaign.name || `Campaign ${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
+                              </p>
+                            </div>
+                            <span className={`${getStatusColor(campaign.status)} text-white text-xs px-2 py-1 rounded capitalize ml-2 flex-shrink-0`}>
+                              {campaign.status}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs text-gray-600 mb-3">
+                            <div>
+                              <span className="block">Kiosks</span>
+                              <span className="font-medium">{campaign.kiosk_count}</span>
+                            </div>
+                            <div>
+                              <span className="block">Duration</span>
+                              <span className="font-medium">{campaign.total_slots * 15}s</span>
+                            </div>
+                            <div>
+                              <span className="block">Price</span>
+                              <span className="font-medium">{formatCurrency(campaign.total_cost)}</span>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={() => navigate(`/client/campaigns/${campaign.id}`)}
+                            className="w-full bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                          >
+                            <span>View Details</span>
+                            <ArrowRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-500">
+                      <p>No campaigns found for the selected filter.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </DashboardLayout>
   );
