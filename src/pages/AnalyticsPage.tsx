@@ -274,6 +274,27 @@ export default function AnalyticsPage() {
     );
   }
 
+  // No-data guard: render a blank screen (empty layout) when there's no data
+  const hasAnyData = !!analyticsData && (
+    (analyticsData.totalImpressions || 0) > 0 ||
+    (analyticsData.totalEngagements || 0) > 0 ||
+    (analyticsData.engagementRate || 0) > 0 ||
+    (analyticsData.topKiosks?.length || 0) > 0 ||
+    (analyticsData.campaignPerformance?.length || 0) > 0 ||
+    (analyticsData.dailyPerformance?.length || 0) > 0
+  );
+
+  if (!hasAnyData) {
+    return (
+      <DashboardLayout
+        title="Analytics"
+        subtitle="Performance metrics and insights for your campaigns"
+      >
+        {/* Intentionally blank when there is no data */}
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout
       title="Analytics"

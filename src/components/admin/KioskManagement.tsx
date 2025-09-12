@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, MapPin, Wifi, WifiOff, Settings, Plus, Search, Filter, Download, DollarSign, Upload, RefreshCw, FileText, X } from 'lucide-react';
+import { Monitor, MapPin, Wifi, WifiOff, Settings, Search, Download, Upload, RefreshCw, FileText, X } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { AdminService } from '../../services/adminService';
 import { supabase } from '../../lib/supabaseClient';
@@ -208,8 +208,8 @@ export default function KioskManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Kiosk Management</h1>
-          <p className="text-gray-600 mt-2">Manage kiosk locations with CSV import/export functionality</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kiosk Management</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage kiosk locations with CSV import/export functionality</p>
         </div>
         <div className="flex space-x-3">
           <button
@@ -239,11 +239,11 @@ export default function KioskManagement() {
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Kiosks</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.total}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Kiosks</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
               <Monitor className="h-6 w-6 text-purple-600" />
@@ -251,11 +251,11 @@ export default function KioskManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.active}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.active}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
               <Wifi className="h-6 w-6 text-green-600" />
@@ -263,11 +263,11 @@ export default function KioskManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Inactive</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.inactive}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Inactive</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.inactive}</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg">
               <WifiOff className="h-6 w-6 text-gray-600" />
@@ -275,11 +275,11 @@ export default function KioskManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Maintenance</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.maintenance}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Maintenance</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.maintenance}</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <Settings className="h-6 w-6 text-yellow-600" />
@@ -289,7 +289,7 @@ export default function KioskManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-64">
             <div className="relative">
@@ -299,7 +299,7 @@ export default function KioskManagement() {
                 placeholder="Search kiosks..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function KioskManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -319,7 +319,7 @@ export default function KioskManagement() {
             <select
               value={trafficFilter}
               onChange={(e) => setTrafficFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Traffic Levels</option>
               <option value="high">High</option>
@@ -331,52 +331,52 @@ export default function KioskManagement() {
       </div>
 
       {/* Kiosks Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Kiosks</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Kiosks</h3>
         </div>
         
         {loading ? (
           <div className="p-6 text-center">
             <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading kiosks...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading kiosks...</p>
           </div>
         ) : filteredKiosks.length === 0 ? (
           <div className="p-6 text-center">
             <Monitor className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No kiosks found</h3>
-            <p className="text-gray-500">No kiosks match your current filters.</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No kiosks found</h3>
+            <p className="text-gray-500 dark:text-gray-400">No kiosks match your current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Kiosk
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Location
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Traffic
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Pricing
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredKiosks.map((kiosk) => {
                   const StatusIcon = getStatusIcon(kiosk.status);
                   return (
-                    <tr key={kiosk.id} className="hover:bg-gray-50">
+                    <tr key={kiosk.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -385,15 +385,15 @@ export default function KioskManagement() {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{kiosk.name}</div>
-                            <div className="text-sm text-gray-500">{kiosk.id}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{kiosk.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{kiosk.id}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{kiosk.location}</div>
-                        <div className="text-sm text-gray-500">{kiosk.city}, {kiosk.state}</div>
-                        <div className="text-sm text-gray-500">{kiosk.address}</div>
+                        <div className="text-sm text-gray-900 dark:text-white">{kiosk.location}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{kiosk.city}, {kiosk.state}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{kiosk.address}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTrafficColor(kiosk.traffic_level)}`}>
@@ -401,8 +401,8 @@ export default function KioskManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">${kiosk.price.toFixed(2)}</div>
-                        <div className="text-sm text-gray-500">Base: ${kiosk.base_rate.toFixed(2)}</div>
+                        <div className="text-sm text-gray-900 dark:text-white">${kiosk.price.toFixed(2)}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Base: ${kiosk.base_rate.toFixed(2)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(kiosk.status)}`}>
@@ -431,9 +431,9 @@ export default function KioskManagement() {
       {/* Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Import Kiosks</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Import Kiosks</h3>
               <button
                 onClick={() => {
                   setShowImportModal(false);
@@ -447,14 +447,14 @@ export default function KioskManagement() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Select CSV File
                 </label>
                 <input
                   type="file"
                   accept=".csv"
                   onChange={handleFileUpload}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 {importFile && (
                   <div className="mt-2 flex items-center space-x-2 text-sm text-green-600">
@@ -465,11 +465,11 @@ export default function KioskManagement() {
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">CSV Format</h4>
-                <p className="text-xs text-blue-800">
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">CSV Format</h4>
+                <p className="text-xs text-blue-800 dark:text-blue-300">
                   Required columns: name, location, address, city, state, traffic_level, base_rate, price, status, lat, lng, description (optional)
                 </p>
-                <p className="text-xs text-blue-800 mt-1">
+                <p className="text-xs text-blue-800 dark:text-blue-300 mt-1">
                   Traffic levels: low, medium, high | Status: active, inactive, maintenance
                 </p>
               </div>
@@ -480,7 +480,7 @@ export default function KioskManagement() {
                     setShowImportModal(false);
                     setImportFile(null);
                   }}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
                 >
                   Cancel
                 </button>

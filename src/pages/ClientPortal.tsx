@@ -15,6 +15,7 @@ import ContactPage from './ContactPage';
 import KiosksPage from './KiosksPage';
 import CampaignDetailsPage from './CampaignDetailsPage';
 import ProofOfPlayPage from './ProofOfPlayPage';
+import SingleProofOfPlayPage from './SingleProofOfPlayPage';
 
 export default function ClientPortal() {
   return (
@@ -29,6 +30,7 @@ export default function ClientPortal() {
       <Route path="/review-submit" element={<ReviewSubmitPage />} />
       <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="/proof-of-play" element={<ProofOfPlayPage />} />
+      <Route path="/campaigns/:campaignId/assets/:assetId/proof-of-play" element={<SingleProofOfPlayPage />} />
       <Route path="/billing" element={<BillingPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/help" element={<HelpCenterPage />} />

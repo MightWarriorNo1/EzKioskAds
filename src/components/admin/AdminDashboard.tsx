@@ -1,5 +1,7 @@
-import React from 'react';
-import { Users, Monitor, CheckSquare, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Monitor, CheckSquare, DollarSign, AlertTriangle, TrendingUp, Upload } from 'lucide-react';
+import { AdminService, AdminMetrics } from '../../services/adminService';
+import { useNotification } from '../../contexts/NotificationContext';
 import MetricsCard from '../shared/MetricsCard';
 import RecentActivity from '../shared/RecentActivity';
 import QuickActions from '../shared/QuickActions';
@@ -7,40 +9,69 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function AdminDashboard() {
-  const metrics = [
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotification();
+
+  useEffect(() => {
+    loadMetrics();
+  }, []);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const data = await AdminService.getDashboardMetrics();
+      setMetrics(data);
+    } catch (error) {
+      console.error('Error loading admin metrics:', error);
+      addNotification('error', 'Error', 'Failed to load dashboard metrics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const metricsCards = metrics ? [
     {
       title: 'Total Users',
-      value: '1,485',
-      change: '+18% this month',
+      value: metrics.totalUsers.toLocaleString(),
+      change: `+${metrics.recentSignups} new this month`,
       changeType: 'positive' as const,
       icon: Users,
       color: 'purple'
     },
     {
       title: 'Active Kiosks',
-      value: '25',
-      change: '+3 this week',
+      value: metrics.activeKiosks.toString(),
+      change: 'Active kiosks',
       changeType: 'positive' as const,
       icon: Monitor,
       color: 'blue'
     },
     {
       title: 'Pending Reviews',
-      value: '12',
-      change: '-8 from yesterday',
+      value: (metrics.pendingReviews + metrics.pendingHostAds).toString(),
+      change: `${metrics.pendingReviews} client, ${metrics.pendingHostAds} host`,
       changeType: 'positive' as const,
       icon: CheckSquare,
       color: 'orange'
     },
     {
       title: 'Platform Revenue',
-      value: '$89,750',
-      change: '+28% this month',
-      changeType: 'positive' as const,
+      value: `$${metrics.platformRevenue.toLocaleString()}`,
+      change: `${metrics.monthlyGrowth > 0 ? '+' : ''}${metrics.monthlyGrowth.toFixed(1)}% this month`,
+      changeType: metrics.monthlyGrowth >= 0 ? 'positive' as const : 'negative' as const,
       icon: DollarSign,
       color: 'green'
+    },
+    {
+      title: 'Total Host Ads',
+      value: metrics.totalHostAds.toString(),
+      change: `${metrics.pendingHostAds} pending review`,
+      changeType: 'positive' as const,
+      icon: Upload,
+      color: 'purple'
     }
-  ];
+  ] : [];
 
   const quickActions = [
     {
@@ -85,12 +116,22 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
-          <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 60}ms` }}>
-            <MetricsCard {...metric} />
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-full"></div>
+            </div>
+          ))
+        ) : (
+          metricsCards.map((metric, index) => (
+            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 60}ms` }}>
+              <MetricsCard {...metric} />
+            </div>
+          ))
+        )}
       </div>
 
       {/* Quick Actions & Recent Activity */}

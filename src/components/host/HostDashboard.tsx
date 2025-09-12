@@ -1,22 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Monitor, DollarSign, MapPin, TrendingUp, Eye, Users, Upload, Calendar, AlertCircle } from 'lucide-react';
-import { useNotification } from '../../contexts/NotificationContext';
+import { Monitor, DollarSign, MapPin, TrendingUp, Eye, Upload, Calendar, Play } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { HostService, HostStats, HostNotification } from '../../services/hostService';
+import { HostService, HostStats } from '../../services/hostService';
+import { ProofOfPlayService } from '../../services/proofOfPlayService';
 import MetricsCard from '../shared/MetricsCard';
 import RecentActivity from '../shared/RecentActivity';
-import QuickActions from '../shared/QuickActions';
+import ProofOfPlayWidget from '../shared/ProofOfPlayWidget';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function HostDashboard() {
   const navigate = useNavigate();
-  const { addNotification } = useNotification();
   const { user } = useAuth();
   const [stats, setStats] = useState<HostStats | null>(null);
-  const [notifications, setNotifications] = useState<HostNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [popSummary, setPopSummary] = useState({
+    totalPlays: 0,
+    uniqueScreens: 0,
+    uniqueAssets: 0,
+    totalDuration: 0,
+    averageDuration: 0
+  });
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -24,23 +29,25 @@ export default function HostDashboard() {
       
       try {
         setLoading(true);
-        const [statsData, notificationsData] = await Promise.all([
+        const [statsData, popData] = await Promise.all([
           HostService.getHostStats(user.id),
-          HostService.getHostNotifications(user.id, true) // Only unread notifications
+          ProofOfPlayService.getProofOfPlaySummary({ 
+            accountId: user.id,
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            endDate: new Date().toISOString().split('T')[0]
+          })
         ]);
-        
         setStats(statsData);
-        setNotifications(notificationsData);
+        setPopSummary(popData);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        addNotification('error', 'Error', 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
 
     loadDashboardData();
-  }, [user?.id, addNotification]);
+  }, [user?.id]);
 
   const metrics = stats ? [
     {
@@ -71,9 +78,17 @@ export default function HostDashboard() {
       title: 'Pending Ads',
       value: stats.pending_ads.toString(),
       change: 'Awaiting review',
-      changeType: stats.pending_ads > 0 ? 'warning' as const : 'positive' as const,
+      changeType: 'positive' as const,
       icon: Upload,
       color: stats.pending_ads > 0 ? 'orange' as const : 'green' as const
+    },
+    {
+      title: 'Total Plays (30d)',
+      value: popSummary.totalPlays.toLocaleString(),
+      change: `${popSummary.uniqueScreens} screens`,
+      changeType: 'positive' as const,
+      icon: Play,
+      color: 'purple' as const
     }
   ] : [];
 
@@ -108,13 +123,10 @@ export default function HostDashboard() {
     }
   ];
 
-  const recentActivities = notifications.slice(0, 6).map(notification => ({
-    action: notification.title,
-    time: new Date(notification.created_at).toLocaleString(),
-    type: notification.type === 'ad_approved' || notification.type === 'payout_processed' ? 'success' as const :
-          notification.type === 'ad_rejected' || notification.type === 'kiosk_offline' ? 'warning' as const :
-          'info' as const
-  }));
+  const recentActivities = [
+    { action: 'System initialized', time: new Date().toLocaleString(), type: 'success' as const },
+    { action: 'Dashboard loaded', time: new Date().toLocaleString(), type: 'info' as const }
+  ];
 
   const handleMetricClick = (metricTitle: string) => {
     // Navigate to relevant page based on metric
@@ -132,7 +144,7 @@ export default function HostDashboard() {
         navigate('/host/ads');
         break;
       default:
-        addNotification('info', 'Metric Details', `Detailed view for ${metricTitle} will be displayed`);
+        console.log(`Detailed view for ${metricTitle} will be displayed`);
     }
   };
 
@@ -152,24 +164,11 @@ export default function HostDashboard() {
         navigate('/host/revenue');
         break;
       default:
-        addNotification('info', 'Quick Action', `${actionTitle} functionality will be implemented soon`);
+        console.log(`${actionTitle} functionality will be implemented soon`);
     }
   };
 
-  const handleRecentActivityClick = (activity: string) => {
-    // Navigate to relevant page based on activity type
-    if (activity.includes('Kiosk')) {
-      navigate('/host/kiosks');
-    } else if (activity.includes('Ad') || activity.includes('assignment')) {
-      navigate('/host/ads');
-    } else if (activity.includes('payout') || activity.includes('revenue')) {
-      navigate('/host/payouts');
-    } else {
-      addNotification('info', 'Activity Details', `Details for "${activity}" will be shown`);
-    }
-  };
-
-  const handleChartInteraction = (chartType: string) => {
+  const handleChartInteraction = () => {
     // Navigate to revenue page for chart interactions
     navigate('/host/revenue');
   };
@@ -200,14 +199,6 @@ export default function HostDashboard() {
       <div>
         <h1 className="text-3xl font-bold">Host Dashboard</h1>
         <p className="mt-2">Monitor your kiosks and track revenue performance</p>
-        {notifications.length > 0 && (
-          <div className="mt-4 flex items-center gap-2 text-orange-600 dark:text-orange-400">
-            <AlertCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">
-              You have {notifications.length} unread notification{notifications.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Metrics */}
@@ -253,25 +244,38 @@ export default function HostDashboard() {
         </Card>
       </div>
 
-      {/* Revenue Chart */}
-      <Card className="animate-fade-in-up" title="Revenue Trends">
-        <div 
-          className="h-64 bg-gradient-to-br from-success-50 to-primary-50 dark:from-gray-800 dark:to-gray-800 rounded-lg flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleChartInteraction('Revenue')}
-        >
-          <div className="text-center">
-            <DollarSign className="h-12 w-12 text-success-600 mx-auto mb-4" />
-            <p>Revenue tracking chart</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Daily, weekly, and monthly earnings breakdown</p>
+      {/* Revenue Chart & PoP Widget */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card className="animate-fade-in-up" title="Revenue Trends">
+          <div 
+            className="h-64 bg-gradient-to-br from-success-50 to-primary-50 dark:from-gray-800 dark:to-gray-800 rounded-lg flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
+            onClick={handleChartInteraction}
+          >
+            <div className="text-center">
+              <DollarSign className="h-12 w-12 text-success-600 mx-auto mb-4" />
+              <p>Revenue tracking chart</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Daily, weekly, and monthly earnings breakdown</p>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+        
+        <ProofOfPlayWidget
+          accountId={user?.id}
+          compact={true}
+          title="Recent Play Activity"
+          maxRecords={5}
+          dateRange={{
+            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            endDate: new Date().toISOString().split('T')[0]
+          }}
+        />
+      </div>
 
       {/* Kiosk Status Map */}
       <Card className="animate-fade-in-up" title="Kiosk Locations">
         <div 
           className="h-64 bg-gradient-to-br from-primary-50 to-success-50 dark:from-gray-800 dark:to-gray-800 rounded-lg flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleChartInteraction('Kiosk Map')}
+          onClick={handleChartInteraction}
         >
           <div className="text-center">
             <MapPin className="h-12 w-12 text-primary-600 mx-auto mb-4" />

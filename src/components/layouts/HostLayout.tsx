@@ -6,12 +6,11 @@ import {
   Calendar, 
   DollarSign, 
   CreditCard, 
+  FileText,
   Menu, 
   LogOut
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import NotificationToast from '../NotificationToast';
-import NotificationDropdown from '../host/NotificationDropdown';
 import Logo from '../shared/Logo';
 import ThemeToggle from '../shared/ThemeToggle';
 
@@ -21,6 +20,7 @@ const navigation = [
   { name: 'Ad Assignment', href: '/host/ads', icon: Calendar },
   { name: 'Revenue Tracker', href: '/host/revenue', icon: DollarSign },
   { name: 'Payout History', href: '/host/payouts', icon: CreditCard },
+  { name: 'Proof-of-Play', href: '/host/proof-of-play', icon: FileText },
 ];
 
 interface HostLayoutProps {
@@ -35,7 +35,7 @@ export default function HostLayout({ children }: HostLayoutProps) {
   const { signOut } = useAuth();
 
   const handleLogoClick = () => {
-    navigate('/');
+    navigate('/host');
   };
 
   const handleSignOut = async () => {
@@ -51,7 +51,6 @@ export default function HostLayout({ children }: HostLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--bg))] dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
-      <NotificationToast />
       
       {/* Top Header */}
       <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -100,9 +99,6 @@ export default function HostLayout({ children }: HostLayoutProps) {
           <div className="flex items-center space-x-4">
             {/* Theme Toggle */}
             <ThemeToggle variant="dropdown" size="md" />
-            
-            {/* Notifications */}
-            <NotificationDropdown />
           </div>
         </div>
       </header>

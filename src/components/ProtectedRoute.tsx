@@ -47,7 +47,15 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    // Redirect to user's appropriate portal based on their role
+    switch (user.role) {
+      case 'admin':
+        return <Navigate to="/admin" replace />;
+      case 'host':
+        return <Navigate to="/host" replace />;
+      default:
+        return <Navigate to="/client" replace />;
+    }
   }
 
   return <>{children}</>;

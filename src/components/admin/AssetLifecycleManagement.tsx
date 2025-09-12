@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Archive, RefreshCw, RotateCcw, Trash2, Eye, Clock, HardDrive, AlertCircle } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { AdminService, AssetLifecycleItem } from '../../services/adminService';
@@ -116,8 +116,8 @@ export default function AssetLifecycleManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Asset Lifecycle Management</h1>
-          <p className="text-gray-600 mt-2">Manage Google Drive asset lifecycle with automatic archiving and deletion</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Asset Lifecycle Management</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage Google Drive asset lifecycle with automatic archiving and deletion</p>
         </div>
         <div className="flex space-x-3">
           <button
@@ -141,11 +141,11 @@ export default function AssetLifecycleManagement() {
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Assets</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.total}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Assets</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
               <HardDrive className="h-6 w-6 text-purple-600" />
@@ -153,11 +153,11 @@ export default function AssetLifecycleManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.active}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.active}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
               <HardDrive className="h-6 w-6 text-green-600" />
@@ -165,11 +165,11 @@ export default function AssetLifecycleManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Archived</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.archived}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Archived</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.archived}</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <Archive className="h-6 w-6 text-yellow-600" />
@@ -177,11 +177,11 @@ export default function AssetLifecycleManagement() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Deleted</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.deleted}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Deleted</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{stats.deleted}</p>
             </div>
             <div className="p-3 bg-red-50 rounded-lg">
               <Trash2 className="h-6 w-6 text-red-600" />
@@ -194,11 +194,11 @@ export default function AssetLifecycleManagement() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-wrap gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -210,54 +210,54 @@ export default function AssetLifecycleManagement() {
       </div>
 
       {/* Assets Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Asset Lifecycle</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Asset Lifecycle</h3>
         </div>
         
         {loading ? (
           <div className="p-6 text-center">
             <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading asset lifecycle...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading asset lifecycle...</p>
           </div>
         ) : filteredAssets.length === 0 ? (
           <div className="p-6 text-center">
             <Archive className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No assets found</h3>
-            <p className="text-gray-500">No assets match your current filters.</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No assets found</h3>
+            <p className="text-gray-500 dark:text-gray-400">No assets match your current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Asset
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Campaign
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Google Drive
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Timeline
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAssets.map((asset) => {
                   const StatusIcon = getStatusIcon(asset.status);
                   const daysUntilDeletion = asset.archived_at ? getDaysUntilDeletion(asset.archived_at) : null;
                   
                   return (
-                    <tr key={asset.id} className="hover:bg-gray-50">
+                    <tr key={asset.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -266,10 +266,10 @@ export default function AssetLifecycleManagement() {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
                               {asset.media_asset.file_name}
                             </div>
-                            <div className="text-sm text-gray-500 capitalize">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
                               {asset.media_asset.file_type}
                             </div>
                           </div>
@@ -278,13 +278,13 @@ export default function AssetLifecycleManagement() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {asset.campaign ? (
                           <div>
-                            <div className="text-sm text-gray-900">{asset.campaign.name}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-900 dark:text-white">{asset.campaign.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               Ended: {new Date(asset.campaign.end_date).toLocaleDateString()}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-500">No campaign</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">No campaign</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -293,26 +293,26 @@ export default function AssetLifecycleManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-white">
                           {asset.google_drive_folder || 'Not synced'}
                         </div>
                         {asset.google_drive_file_id && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             ID: {asset.google_drive_file_id.slice(0, 8)}...
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-white">
                           Created: {new Date(asset.created_at).toLocaleDateString()}
                         </div>
                         {asset.archived_at && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             Archived: {new Date(asset.archived_at).toLocaleDateString()}
                           </div>
                         )}
                         {asset.deleted_at && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             Deleted: {new Date(asset.deleted_at).toLocaleDateString()}
                           </div>
                         )}
@@ -366,8 +366,8 @@ export default function AssetLifecycleManagement() {
 
       {/* Lifecycle Information */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">Asset Lifecycle Rules</h3>
-        <div className="space-y-3 text-sm text-blue-800">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3">Asset Lifecycle Rules</h3>
+        <div className="space-y-3 text-sm text-blue-800 dark:text-blue-300">
           <div className="flex items-start space-x-2">
             <HardDrive className="h-4 w-4 text-blue-600 mt-0.5" />
             <p><strong>Active:</strong> Assets from active campaigns are stored in the Active folder</p>

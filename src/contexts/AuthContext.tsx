@@ -109,17 +109,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             } catch (profileError) {
               console.error('Auth: Profile mapping error during initialization:', profileError);
-              // Fallback to basic user info
-              const basicUser: User = {
+              // Preserve existing role if available to avoid accidental downgrades
+              const preservedRole: UserRole | undefined = user?.role;
+              const fallbackRole: UserRole = preservedRole || (session.user.user_metadata?.role as UserRole) || 'client';
+              const safeUser: User = {
                 id: session.user.id,
                 email: session.user.email ?? '',
                 name: session.user.user_metadata?.name,
-                role: (session.user.user_metadata?.role as UserRole) || 'client',
+                role: fallbackRole,
                 avatar: session.user.user_metadata?.avatar,
               };
               if (isMounted) {
-                setUser(basicUser);
-                console.log('Auth: Fallback user set:', basicUser.email);
+                setUser(safeUser);
+                console.log('Auth: Fallback user set with preserved role:', safeUser.email, safeUser.role);
               }
             }
           } else if (isMounted) {
@@ -168,15 +170,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isMounted) setUser(u);
         } catch (profileError) {
           console.error('Auth: Profile mapping error during auth state change:', profileError);
-          // Fallback to basic user info
-          const basicUser: User = {
+          // Preserve existing role if available to avoid accidental downgrades
+          const preservedRole: UserRole | undefined = user?.role;
+          const fallbackRole: UserRole = preservedRole || (session.user.user_metadata?.role as UserRole) || 'client';
+          const safeUser: User = {
             id: session.user.id,
             email: session.user.email ?? '',
             name: session.user.user_metadata?.name,
-            role: (session.user.user_metadata?.role as UserRole) || 'client',
+            role: fallbackRole,
             avatar: session.user.user_metadata?.avatar,
           };
-          if (isMounted) setUser(basicUser);
+          if (isMounted) setUser(safeUser);
         }
       } else {
         console.log('Auth: No session in auth state change, setting user to null');

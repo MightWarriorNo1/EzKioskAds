@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CreditCard, Calendar, Download, TrendingUp, Clock, ExternalLink, Settings, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { HostService, HostPayout, HostPayoutStatement } from '../../services/hostService';
 import { StripeConnectService } from '../../services/stripeConnectService';
+import StripeConnectSetup from './StripeConnectSetup';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 export default function PayoutHistory() {
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [payouts, setPayouts] = useState<HostPayout[]>([]);
   const [payoutStats, setPayoutStats] = useState({
     totalPayouts: 0,
@@ -50,36 +53,54 @@ export default function PayoutHistory() {
     };
 
     loadPayoutData();
-  }, [user?.id, addNotification]);
+  }, [user?.id]);
 
-  const handleSetupStripeConnect = async () => {
-    if (!user?.id) return;
-    
-    try {
-      const { url } = await StripeConnectService.createAccountLink(
-        user.id,
-        `${window.location.origin}/host/payouts`,
-        `${window.location.origin}/host/payouts`
-      );
-      
-      window.open(url, '_blank');
-      addNotification('info', 'Stripe Connect Setup', 'Please complete the setup process in the new window');
-    } catch (error) {
-      console.error('Error setting up Stripe Connect:', error);
-      addNotification('error', 'Setup Failed', 'Failed to setup Stripe Connect. Please try again.');
+  // Handle Stripe Connect setup completion
+  useEffect(() => {
+    const setupComplete = searchParams.get('setup');
+    if (setupComplete === 'complete') {
+      addNotification('success', 'Setup Complete', 'Stripe Connect has been set up successfully!');
+      // Remove the query parameter from URL
+      setSearchParams({});
+      // Refresh the data to show updated status
+      const loadPayoutData = async () => {
+        if (!user?.id) return;
+        
+        try {
+          const [payoutsData, profileData, statsData, stripeEnabled] = await Promise.all([
+            HostService.getHostPayouts(user.id),
+            HostService.getHostProfile(user.id),
+            StripeConnectService.getPayoutStats(user.id),
+            StripeConnectService.isStripeConnectEnabled(user.id)
+          ]);
+
+          setPayouts(payoutsData);
+          setHostProfile(profileData);
+          setPayoutStats(statsData);
+          setStripeConnectEnabled(stripeEnabled);
+        } catch (error) {
+          console.error('Error refreshing payout data:', error);
+        }
+      };
+      loadPayoutData();
     }
-  };
+  }, [searchParams, setSearchParams, addNotification, user?.id]);
 
   const handleUpdatePayoutSettings = async (settings: { payout_frequency?: string; minimum_payout?: number }) => {
     if (!user?.id) return;
     
     try {
+      // Optimistically update local state to avoid reload/flash
+      setHostProfile((prev: any) => ({ ...(prev || {}), ...settings }));
       await HostService.updatePayoutSettings(user.id, settings);
       addNotification('success', 'Settings Updated', 'Payout settings have been updated');
       
-      // Reload profile data
-      const profileData = await HostService.getHostProfile(user.id);
-      setHostProfile(profileData);
+      // Optionally refresh in background to ensure consistency
+      HostService.getHostProfile(user.id).then((profileData) => {
+        setHostProfile(profileData);
+      }).catch(() => {
+        // Ignore background refresh errors
+      });
     } catch (error) {
       console.error('Error updating payout settings:', error);
       addNotification('error', 'Update Failed', 'Failed to update payout settings');
@@ -187,26 +208,31 @@ Thank you for using EZ Kiosk Ads!
         <p className="mt-2">Track your earnings and payment history</p>
       </div>
 
-      {/* Stripe Connect Setup Alert */}
-      {!stripeConnectEnabled && (
-        <Card className="p-6 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              <div>
-                <h3 className="font-medium text-orange-800 dark:text-orange-200">Stripe Connect Setup Required</h3>
-                <p className="text-sm text-orange-700 dark:text-orange-300">
-                  Set up Stripe Connect to receive automatic payouts
-                </p>
-              </div>
-            </div>
-            <Button onClick={handleSetupStripeConnect}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Setup Stripe Connect
-            </Button>
-          </div>
-        </Card>
-      )}
+      {/* Stripe Connect Setup */}
+      <StripeConnectSetup onSetupComplete={() => {
+        // Refresh the data when setup is complete
+        const loadPayoutData = async () => {
+          if (!user?.id) return;
+          
+          try {
+            const [payoutsData, profileData, statsData, stripeEnabled] = await Promise.all([
+              HostService.getHostPayouts(user.id),
+              HostService.getHostProfile(user.id),
+              StripeConnectService.getPayoutStats(user.id),
+              StripeConnectService.isStripeConnectEnabled(user.id)
+            ]);
+
+            setPayouts(payoutsData);
+            setHostProfile(profileData);
+            setPayoutStats(statsData);
+            setStripeConnectEnabled(stripeEnabled);
+          } catch (error) {
+            console.error('Error loading payout data:', error);
+            addNotification('error', 'Error', 'Failed to load payout data');
+          }
+        };
+        loadPayoutData();
+      }} />
 
       {/* Payout Summary */}
       <div className="grid md:grid-cols-4 gap-6">

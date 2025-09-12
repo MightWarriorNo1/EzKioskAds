@@ -101,7 +101,7 @@ export default function CreativeOrdersManagement() {
         {Object.entries(statusCounts).map(([status, count]) => {
           const StatusIcon = status === 'all' ? Package : getStatusIcon(status);
           return (
-            <div key={status} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div key={status} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 capitalize">
@@ -131,10 +131,10 @@ export default function CreativeOrdersManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-wrap gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -148,7 +148,7 @@ export default function CreativeOrdersManagement() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">Category</label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -165,9 +165,9 @@ export default function CreativeOrdersManagement() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Creative Orders</h3>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-900">Creative Orders</h3>
         </div>
         
         {loading ? (

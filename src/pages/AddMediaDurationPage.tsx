@@ -13,6 +13,7 @@ interface SelectedWeek {
 
 interface CampaignData {
   kiosk: any;
+  kiosks?: any[];
   selectedWeeks: SelectedWeek[];
   totalSlots: number;
   baseRate: number;
@@ -42,6 +43,7 @@ export default function AddMediaDurationPage() {
   }
   
   const kiosk = campaignData.kiosk;
+  const kiosks = campaignData.kiosks || (campaignData.kiosk ? [campaignData.kiosk] : []);
   const selectedWeeks = campaignData.selectedWeeks || [];
   const totalSlots = campaignData.totalSlots || 1;
   const baseRate = campaignData.baseRate || 40.00;
@@ -225,6 +227,7 @@ export default function AddMediaDurationPage() {
       navigate('/client/review-submit', {
         state: {
           ...campaignData,
+          kiosks,
           mediaFile: uploadedFile,
           slotsPerWeek,
           uploadedMediaAsset
@@ -522,7 +525,7 @@ export default function AddMediaDurationPage() {
                       <p className="text-lg font-medium text-gray-900 dark:text-white">
                         {uploadedFile.name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark;text-gray-400">
                         {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>

@@ -159,7 +159,7 @@ export default function SiteHeader() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle variant="dropdown" size="md" />
-          <button onClick={handleDashboardClick} className="btn-primary">Dashboard</button>
+          <button onClick={handleDashboardClick} className="btn-primary">{user ? 'Dashboard' : 'Login'}</button>
         </div>
       </nav>
     </header>

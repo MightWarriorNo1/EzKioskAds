@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Edit, Trash2, Eye, EyeOff, RefreshCw, Star, MessageSquare, Bell, BarChart3 } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { AdminService, MarketingTool, Testimonial } from '../../services/adminService';
@@ -144,8 +144,8 @@ export default function MarketingTools() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Marketing Tools</h1>
-          <p className="text-gray-600 mt-2">Manage announcement bars, popups, testimonials, and sales notifications</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Marketing Tools</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage announcement bars, popups, testimonials, and sales notifications</p>
         </div>
         <div className="flex space-x-3">
           <button
@@ -167,15 +167,15 @@ export default function MarketingTools() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6">
             <button
               onClick={() => setActiveTab('tools')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'tools'
                   ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
               }`}
             >
               Marketing Tools
@@ -185,7 +185,7 @@ export default function MarketingTools() {
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'testimonials'
                   ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
               }`}
             >
               Testimonials
@@ -196,31 +196,31 @@ export default function MarketingTools() {
         <div className="p-6">
           {activeTab === 'tools' ? (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Marketing Tools</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Marketing Tools</h3>
               {loading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-500">Loading marketing tools...</p>
+                  <p className="text-gray-500 dark:text-gray-400">Loading marketing tools...</p>
                 </div>
               ) : marketingTools.length === 0 ? (
                 <div className="text-center py-8">
                   <Megaphone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No marketing tools</h3>
-                  <p className="text-gray-500">Create your first marketing tool to get started.</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No marketing tools</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Create your first marketing tool to get started.</p>
                 </div>
               ) : (
                 <div className="grid gap-4">
                   {marketingTools.map((tool) => {
                     const TypeIcon = getTypeIcon(tool.type);
                     return (
-                      <div key={tool.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div key={tool.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className="p-2 bg-purple-100 rounded-lg">
                               <TypeIcon className="h-5 w-5 text-purple-600" />
                             </div>
                             <div>
-                              <h4 className="text-lg font-medium text-gray-900">{tool.title}</h4>
+                              <h4 className="text-lg font-medium text-gray-900 dark:text-white">{tool.title}</h4>
                               <div className="flex items-center space-x-2 mt-1">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(tool.type)}`}>
                                   {tool.type.replace('_', ' ')}
@@ -230,7 +230,7 @@ export default function MarketingTools() {
                                 }`}>
                                   {tool.is_active ? 'Active' : 'Inactive'}
                                 </span>
-                                <span className="text-xs text-gray-500">Priority: {tool.priority}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Priority: {tool.priority}</span>
                               </div>
                             </div>
                           </div>
@@ -247,7 +247,7 @@ export default function MarketingTools() {
                           </div>
                         </div>
                         <div className="mt-3">
-                          <p className="text-sm text-gray-600 line-clamp-2">{tool.content}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{tool.content}</p>
                         </div>
                       </div>
                     );
@@ -257,22 +257,22 @@ export default function MarketingTools() {
             </div>
           ) : (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Testimonials</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Testimonials</h3>
               {loading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-500">Loading testimonials...</p>
+                  <p className="text-gray-500 dark:text-gray-400">Loading testimonials...</p>
                 </div>
               ) : testimonials.length === 0 ? (
                 <div className="text-center py-8">
                   <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No testimonials</h3>
-                  <p className="text-gray-500">Create your first testimonial to showcase customer feedback.</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No testimonials</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Create your first testimonial to showcase customer feedback.</p>
                 </div>
               ) : (
                 <div className="grid gap-4">
                   {testimonials.map((testimonial) => (
-                    <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div key={testimonial.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
@@ -289,9 +289,9 @@ export default function MarketingTools() {
                             )}
                           </div>
                           <div>
-                            <h4 className="text-lg font-medium text-gray-900">{testimonial.client_name}</h4>
+                            <h4 className="text-lg font-medium text-gray-900 dark:text-white">{testimonial.client_name}</h4>
                             {testimonial.client_company && (
-                              <p className="text-sm text-gray-600">{testimonial.client_company}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.client_company}</p>
                             )}
                             <div className="flex items-center space-x-2 mt-1">
                               <div className="flex items-center">
@@ -332,7 +332,7 @@ export default function MarketingTools() {
                         </div>
                       </div>
                       <div className="mt-3">
-                        <p className="text-sm text-gray-600 line-clamp-3">"{testimonial.content}"</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">"{testimonial.content}"</p>
                       </div>
                     </div>
                   ))}
@@ -346,9 +346,9 @@ export default function MarketingTools() {
       {/* Create/Edit Modal */}
       {(showCreateModal || editingItem) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingItem ? 'Edit' : 'Create'} {activeTab === 'testimonials' ? 'Testimonial' : 'Marketing Tool'}
               </h3>
               <button
@@ -369,53 +369,53 @@ export default function MarketingTools() {
                 <>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Client Name</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Client Name</label>
                       <input
                         type="text"
                         value={formData.client_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="John Doe"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Company (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Company (Optional)</label>
                       <input
                         type="text"
                         value={formData.client_company}
                         onChange={(e) => setFormData(prev => ({ ...prev, client_company: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="Acme Corp"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Avatar URL (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Avatar URL (Optional)</label>
                     <input
                       type="url"
                       value={formData.client_avatar_url}
                       onChange={(e) => setFormData(prev => ({ ...prev, client_avatar_url: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="https://example.com/avatar.jpg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Testimonial Content</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Testimonial Content</label>
                     <textarea
                       value={formData.content}
                       onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       rows={4}
                       placeholder="Share your experience with our platform..."
                     />
                   </div>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating</label>
                       <select
                         value={formData.rating}
                         onChange={(e) => setFormData(prev => ({ ...prev, rating: Number(e.target.value) }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         {[1, 2, 3, 4, 5].map(rating => (
                           <option key={rating} value={rating}>{rating} Star{rating > 1 ? 's' : ''}</option>
@@ -423,12 +423,12 @@ export default function MarketingTools() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Display Order</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Order</label>
                       <input
                         type="number"
                         value={formData.display_order}
                         onChange={(e) => setFormData(prev => ({ ...prev, display_order: Number(e.target.value) }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         min="0"
                       />
                     </div>
@@ -440,7 +440,7 @@ export default function MarketingTools() {
                           onChange={(e) => setFormData(prev => ({ ...prev, is_featured: e.target.checked }))}
                           className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 text-sm text-gray-900">Featured</span>
+                        <span className="ml-2 text-sm text-gray-900 dark:text-white">Featured</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -449,7 +449,7 @@ export default function MarketingTools() {
                           onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
                           className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 text-sm text-gray-900">Active</span>
+                        <span className="ml-2 text-sm text-gray-900 dark:text-white">Active</span>
                       </label>
                     </div>
                   </div>
@@ -459,11 +459,11 @@ export default function MarketingTools() {
                 <>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
                       <select
                         value={formData.type}
                         onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         <option value="announcement_bar">Announcement Bar</option>
                         <option value="popup">Popup</option>
@@ -471,53 +471,53 @@ export default function MarketingTools() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
                       <input
                         type="number"
                         value={formData.priority}
                         onChange={(e) => setFormData(prev => ({ ...prev, priority: Number(e.target.value) }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         min="0"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Enter title..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
                     <textarea
                       value={formData.content}
                       onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       rows={4}
                       placeholder="Enter content..."
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Start Date (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date (Optional)</label>
                       <input
                         type="date"
                         value={formData.start_date}
                         onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">End Date (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date (Optional)</label>
                       <input
                         type="date"
                         value={formData.end_date}
                         onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -529,7 +529,7 @@ export default function MarketingTools() {
                       onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
                       className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900 dark:text-white">
                       Active (tool is visible to users)
                     </label>
                   </div>
@@ -544,7 +544,7 @@ export default function MarketingTools() {
                     setEditingItem(null);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
                 >
                   Cancel
                 </button>

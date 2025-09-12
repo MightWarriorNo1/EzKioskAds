@@ -25,7 +25,7 @@ export default function NewCampaignPage() {
       subtitle=""
       showBreadcrumb={false}
     >
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="max-w-7xl mx-auto w-full px-2 sm:px-4">
         {/* Progress Indicator */}
         <ProgressSteps steps={steps} currentStep={1} />
 
@@ -40,7 +40,7 @@ export default function NewCampaignPage() {
           </div>
 
           {/* Setup Options */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
             {/* Full-Service Setup */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-6 md:p-8 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
               <div className="text-center mb-4 sm:mb-6">

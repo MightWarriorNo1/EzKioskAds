@@ -10,6 +10,8 @@ export interface AdminMetrics {
   totalAds: number;
   recentSignups: number;
   monthlyGrowth: number;
+  pendingHostAds: number;
+  totalHostAds: number;
 }
 
 export interface AdReviewItem {
@@ -183,14 +185,18 @@ export class AdminService {
         { count: pendingReviews },
         { count: totalCampaigns },
         { count: totalAds },
-        { count: recentSignups }
+        { count: recentSignups },
+        { count: pendingHostAds },
+        { count: totalHostAds }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('kiosks').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('media_assets').select('*', { count: 'exact', head: true }).eq('status', 'processing'),
         supabase.from('campaigns').select('*', { count: 'exact', head: true }),
         supabase.from('media_assets').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('host_ads').select('*', { count: 'exact', head: true }).eq('status', 'pending_review'),
+        supabase.from('host_ads').select('*', { count: 'exact', head: true })
       ]);
 
       // Get platform revenue from invoices
@@ -218,7 +224,9 @@ export class AdminService {
         totalCampaigns: totalCampaigns || 0,
         totalAds: totalAds || 0,
         recentSignups: recentSignups || 0,
-        monthlyGrowth: Math.round(monthlyGrowth * 100) / 100
+        monthlyGrowth: Math.round(monthlyGrowth * 100) / 100,
+        pendingHostAds: pendingHostAds || 0,
+        totalHostAds: totalHostAds || 0
       };
     } catch (error) {
       console.error('Error fetching admin metrics:', error);
@@ -226,7 +234,7 @@ export class AdminService {
     }
   }
 
-  // Get ad review queue
+  // Get ad review queue (client media assets)
   static async getAdReviewQueue(): Promise<AdReviewItem[]> {
     try {
       const { data, error } = await supabase
@@ -247,7 +255,45 @@ export class AdminService {
     }
   }
 
-  // Approve or reject ad
+  // Get host ads review queue
+  static async getHostAdsReviewQueue(): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('host_ads')
+        .select(`
+          *,
+          host:profiles!host_ads_host_id_fkey(id, full_name, email, company_name)
+        `)
+        .in('status', ['pending_review'])
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching host ads review queue:', error);
+      throw error;
+    }
+  }
+
+  // Get all ads for review (both client and host ads)
+  static async getAllAdsForReview(): Promise<{
+    clientAds: AdReviewItem[];
+    hostAds: any[];
+  }> {
+    try {
+      const [clientAds, hostAds] = await Promise.all([
+        this.getAdReviewQueue(),
+        this.getHostAdsReviewQueue()
+      ]);
+
+      return { clientAds, hostAds };
+    } catch (error) {
+      console.error('Error fetching all ads for review:', error);
+      throw error;
+    }
+  }
+
+  // Approve or reject client ad (media asset)
   static async reviewAd(mediaAssetId: string, action: 'approve' | 'reject', rejectionReason?: string): Promise<void> {
     try {
       const status = action === 'approve' ? 'approved' : 'rejected';
@@ -277,6 +323,40 @@ export class AdminService {
       }
     } catch (error) {
       console.error('Error reviewing ad:', error);
+      throw error;
+    }
+  }
+
+  // Approve or reject host ad
+  static async reviewHostAd(hostAdId: string, action: 'approve' | 'reject', rejectionReason?: string): Promise<void> {
+    try {
+      const status = action === 'approve' ? 'approved' : 'rejected';
+      
+      const { error } = await supabase
+        .from('host_ads')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString(),
+          ...(action === 'reject' && rejectionReason ? { rejection_reason: rejectionReason } : {})
+        })
+        .eq('id', hostAdId);
+
+      if (error) throw error;
+
+      // Log admin action
+      await this.logAdminAction('review_host_ad', 'host_ad', hostAdId, {
+        action,
+        rejection_reason: rejectionReason
+      });
+
+      // Send email notification to host
+      if (action === 'approve') {
+        await this.sendHostAdApprovalEmail(hostAdId);
+      } else {
+        await this.sendHostAdRejectionEmail(hostAdId, rejectionReason);
+      }
+    } catch (error) {
+      console.error('Error reviewing host ad:', error);
       throw error;
     }
   }
@@ -824,6 +904,88 @@ export class AdminService {
         });
     } catch (error) {
       console.error('Error sending ad rejection email:', error);
+    }
+  }
+
+  // Send host ad approval email
+  private static async sendHostAdApprovalEmail(hostAdId: string): Promise<void> {
+    try {
+      // Get host ad and host details
+      const { data: hostAd } = await supabase
+        .from('host_ads')
+        .select(`
+          *,
+          host:profiles!host_ads_host_id_fkey(id, full_name, email)
+        `)
+        .eq('id', hostAdId)
+        .single();
+
+      if (!hostAd) return;
+
+      // Get email template
+      const { data: template } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('type', 'host_ad_approval')
+        .eq('is_active', true)
+        .single();
+
+      if (!template) return;
+
+      // Send email
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: hostAd.host.email,
+          subject: template.subject.replace('{{ad_name}}', hostAd.name),
+          body_html: template.body_html.replace('{{ad_name}}', hostAd.name),
+          body_text: template.body_text?.replace('{{ad_name}}', hostAd.name)
+        }
+      });
+    } catch (error) {
+      console.error('Error sending host ad approval email:', error);
+    }
+  }
+
+  // Send host ad rejection email
+  private static async sendHostAdRejectionEmail(hostAdId: string, rejectionReason?: string): Promise<void> {
+    try {
+      // Get host ad and host details
+      const { data: hostAd } = await supabase
+        .from('host_ads')
+        .select(`
+          *,
+          host:profiles!host_ads_host_id_fkey(id, full_name, email)
+        `)
+        .eq('id', hostAdId)
+        .single();
+
+      if (!hostAd) return;
+
+      // Get email template
+      const { data: template } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('type', 'host_ad_rejection')
+        .eq('is_active', true)
+        .single();
+
+      if (!template) return;
+
+      // Send email
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: hostAd.host.email,
+          subject: template.subject.replace('{{ad_name}}', hostAd.name),
+          body_html: template.body_html
+            .replace('{{ad_name}}', hostAd.name)
+            .replace('{{rejection_reason}}', rejectionReason || 'Content does not meet our guidelines'),
+          body_text: template.body_text
+            ?.replace('{{ad_name}}', hostAd.name)
+            .replace('{{rejection_reason}}', rejectionReason || 'Content does not meet our guidelines')
+        }
+      });
+    } catch (error) {
+      console.error('Error sending host ad rejection email:', error);
     }
   }
 }

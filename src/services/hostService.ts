@@ -106,16 +106,6 @@ export interface HostPayoutStatement {
   };
 }
 
-export interface HostNotification {
-  id: string;
-  host_id: string;
-  type: 'ad_approved' | 'ad_rejected' | 'payout_processed' | 'kiosk_offline' | 'revenue_milestone' | 'system_alert';
-  title: string;
-  message: string;
-  data?: any;
-  read: boolean;
-  created_at: string;
-}
 
 export interface HostStats {
   total_kiosks: number;
@@ -406,43 +396,6 @@ export class HostService {
     }
   }
 
-  // Get host notifications
-  static async getHostNotifications(hostId: string, unreadOnly = false): Promise<HostNotification[]> {
-    try {
-      let query = supabase
-        .from('host_notifications')
-        .select('*')
-        .eq('host_id', hostId)
-        .order('created_at', { ascending: false });
-
-      if (unreadOnly) {
-        query = query.eq('read', false);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching host notifications:', error);
-      throw error;
-    }
-  }
-
-  // Mark notification as read
-  static async markNotificationAsRead(notificationId: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('host_notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      throw error;
-    }
-  }
 
   // Get host statistics
   static async getHostStats(hostId: string): Promise<HostStats> {

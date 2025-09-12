@@ -21,11 +21,182 @@ export interface ProofOfPlayFilters {
   screenId?: string;
   assetId?: string;
   accountId?: string;
+  kioskId?: string;
+  orgId?: string;
+  useNewPlaysTable?: boolean; // Flag to use the new plays table instead of analytics_events
 }
 
 export class ProofOfPlayService {
-  // Get Proof-of-Play records with filters
+  // Shows counts from MV (fallback to raw plays)
+  static async getShowsCount(params: { orgId: string; assetId: string; campaignId?: string; kioskId?: string; period: 'daily' | 'weekly' | 'monthly' }): Promise<number> {
+    const { orgId, assetId, campaignId, kioskId, period } = params
+    const now = new Date()
+    let since: string
+    if (period === 'daily') {
+      since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
+    } else if (period === 'weekly') {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+      d.setUTCDate(d.getUTCDate() - 6)
+      since = d.toISOString()
+    } else {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+      d.setUTCDate(d.getUTCDate() - 29)
+      since = d.toISOString()
+    }
+
+    // Try MV
+    try {
+      const { data, error } = await supabase
+        .from('plays_daily')
+        .select('shows, day')
+        .eq('org_id', orgId)
+        .eq('asset_id', assetId)
+        .gte('day', since)
+      if (error) throw error
+
+      const sum = (data ?? []).reduce((acc: number, r: any) => acc + (r.shows ?? 0), 0)
+      if (kioskId || campaignId) {
+        // plays_daily is not per kiosk/campaign; if filters provided, fallback to raw plays
+        throw new Error('need raw plays for kiosk/campaign filter')
+      }
+      return sum
+    } catch (_) {
+      // Fallback to raw plays
+      let query = supabase
+        .from('plays')
+        .select('id, played_at, kiosk_id, campaign_id', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('asset_id', assetId)
+        .gte('played_at', since)
+      if (kioskId) query = query.eq('kiosk_id', kioskId)
+      if (campaignId) query = query.eq('campaign_id', campaignId)
+      const { count, error } = await query
+      if (error) throw error
+      return count ?? 0
+    }
+  }
+
+  // Get Proof-of-Play records with filters (supports both old and new tables)
   static async getProofOfPlayRecords(
+    filters: ProofOfPlayFilters = {}
+  ): Promise<ProofOfPlayRecord[]> {
+    try {
+      // Use new plays table if specified or if we have orgId
+      if (filters.useNewPlaysTable || filters.orgId) {
+        return await this.getProofOfPlayRecordsFromPlays(filters);
+      }
+      
+      // Try legacy analytics_events table first
+      return await this.getProofOfPlayRecordsFromAnalytics(filters);
+    } catch (error) {
+      console.error('Error in getProofOfPlayRecords:', error);
+      
+      // If analytics_events fails and we haven't tried plays table yet, try it
+      if (!filters.useNewPlaysTable && !filters.orgId) {
+        console.log('Falling back to plays table...');
+        try {
+          return await this.getProofOfPlayRecordsFromPlays(filters);
+        } catch (playsError) {
+          console.error('Plays table also failed:', playsError);
+        }
+      }
+      
+      // If all else fails, return empty array
+      console.warn('No PoP data available, returning empty array');
+      return [];
+    }
+  }
+
+  // Get Proof-of-Play records from the new plays table
+  static async getProofOfPlayRecordsFromPlays(
+    filters: ProofOfPlayFilters = {}
+  ): Promise<ProofOfPlayRecord[]> {
+    try {
+      let query = supabase
+        .from('plays')
+        .select(`
+          id,
+          played_at,
+          ended_at,
+          duration_sec,
+          kiosks!inner(
+            id,
+            name,
+            location
+          ),
+          assets!inner(
+            id,
+            asset_name,
+            duration_sec
+          ),
+          campaigns(
+            id,
+            name
+          ),
+          orgs!inner(
+            id,
+            name
+          )
+        `)
+        .order('played_at', { ascending: false });
+
+      // Apply filters
+      if (filters.startDate) {
+        query = query.gte('played_at', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('played_at', filters.endDate);
+      }
+      if (filters.campaignId) {
+        query = query.eq('campaign_id', filters.campaignId);
+      }
+      if (filters.kioskId) {
+        query = query.eq('kiosk_id', filters.kioskId);
+      }
+      if (filters.assetId) {
+        query = query.eq('asset_id', filters.assetId);
+      }
+      if (filters.orgId) {
+        query = query.eq('org_id', filters.orgId);
+      }
+
+      const { data: plays, error } = await query;
+
+      if (error) {
+        console.error('Plays table query error:', error);
+        throw new Error(`Failed to fetch Proof-of-Play records: ${error.message}`);
+      }
+
+      // Transform data to match PoP record structure
+      const proofOfPlayRecords: ProofOfPlayRecord[] = (plays || []).map(play => {
+        const playedAt = new Date(play.played_at);
+        const localTime = new Date(playedAt.getTime() - (playedAt.getTimezoneOffset() * 60000));
+        
+        return {
+          reportDateUTC: playedAt.toISOString().split('T')[0],
+          accountId: filters.accountId || '',
+          screenUUID: (play.kiosks as any)?.id || '',
+          screenName: (play.kiosks as any)?.name || 'Unknown Screen',
+          screenTags: (play.kiosks as any)?.location || '',
+          assetId: (play.assets as any)?.id || '',
+          assetName: (play.assets as any)?.asset_name || 'Unknown Asset',
+          assetTags: '',
+          startTimeUTC: playedAt.toISOString(),
+          deviceLocalTime: localTime.toISOString(),
+          duration: play.duration_sec || (play.assets as any)?.duration_sec || 15
+        };
+      });
+
+      return proofOfPlayRecords;
+    } catch (error) {
+      console.error('Error fetching Proof-of-Play records from plays table:', error);
+      // Fallback to legacy table if new table fails
+      return this.getProofOfPlayRecordsFromAnalytics(filters);
+    }
+  }
+
+  // Get Proof-of-Play records from legacy analytics_events table
+  static async getProofOfPlayRecordsFromAnalytics(
     filters: ProofOfPlayFilters = {}
   ): Promise<ProofOfPlayRecord[]> {
     try {
@@ -40,7 +211,7 @@ export class ProofOfPlayService {
           media_assets!inner(
             id,
             file_name,
-            tags
+            file_type
           ),
           campaigns!inner(
             id,
@@ -74,6 +245,7 @@ export class ProofOfPlayService {
       const { data: events, error } = await query;
 
       if (error) {
+        console.error('Analytics events query error:', error);
         throw new Error(`Failed to fetch Proof-of-Play records: ${error.message}`);
       }
 
@@ -90,7 +262,7 @@ export class ProofOfPlayService {
           screenTags: '',
           assetId: event.media_id || '',
           assetName: (event.media_assets as any)?.file_name || 'Unknown Asset',
-          assetTags: (event.media_assets as any)?.tags || '',
+          assetTags: (event.media_assets as any)?.file_type || '',
           startTimeUTC: timestamp.toISOString(),
           deviceLocalTime: localTime.toISOString(),
           duration: this.calculateDuration(event.device_info)
@@ -166,7 +338,7 @@ export class ProofOfPlayService {
       // Extract unique locations and create screen objects
       const uniqueLocations = [...new Set((events || []).map(event => event.location))];
       
-      return uniqueLocations.map((location, index) => ({
+      return uniqueLocations.map((location) => ({
         id: location,
         name: location,
         location: location,
@@ -178,16 +350,71 @@ export class ProofOfPlayService {
     }
   }
 
+  // Get PoP information for a specific asset
+  static async getAssetProofOfPlay(
+    assetId: string,
+    filters: Omit<ProofOfPlayFilters, 'assetId'> = {}
+  ): Promise<{
+    asset: {
+      id: string;
+      name: string;
+      type: string;
+      duration?: number;
+    };
+    summary: {
+      totalPlays: number;
+      uniqueScreens: number;
+      totalDuration: number;
+      averageDuration: number;
+      dateRange: { start: string; end: string };
+    };
+    records: ProofOfPlayRecord[];
+  }> {
+    try {
+      // Get asset information
+      const { data: asset, error: assetError } = await supabase
+        .from('media_assets')
+        .select('id, file_name, file_type, duration')
+        .eq('id', assetId)
+        .single();
+
+      if (assetError || !asset) {
+        throw new Error(`Asset not found: ${assetError?.message || 'Unknown error'}`);
+      }
+
+      // Get PoP records for this asset
+      const assetFilters = { ...filters, assetId };
+      const [records, summary] = await Promise.all([
+        this.getProofOfPlayRecords(assetFilters),
+        this.getProofOfPlaySummary(assetFilters)
+      ]);
+
+      return {
+        asset: {
+          id: asset.id,
+          name: asset.file_name,
+          type: asset.file_type,
+          duration: asset.duration
+        },
+        summary,
+        records
+      };
+    } catch (error) {
+      console.error('Error getting asset Proof-of-Play:', error);
+      throw error;
+    }
+  }
+
   // Get available assets for filtering
   static async getAvailableAssets(accountId?: string): Promise<Array<{
     id: string;
     file_name: string;
-    tags: string;
+    file_type: string;
   }>> {
     try {
       let query = supabase
         .from('media_assets')
-        .select('id, file_name, tags, user_id')
+        .select('id, file_name, file_type, user_id')
         .order('file_name', { ascending: true });
 
       if (accountId) {
@@ -203,7 +430,7 @@ export class ProofOfPlayService {
       return (assets || []).map(asset => ({
         id: asset.id,
         file_name: asset.file_name,
-        tags: asset.tags
+        file_type: asset.file_type
       }));
     } catch (error) {
       console.error('Error fetching assets:', error);
@@ -277,6 +504,18 @@ export class ProofOfPlayService {
     try {
       const records = await this.getProofOfPlayRecords(filters);
       
+      // Handle empty records gracefully
+      if (!records || records.length === 0) {
+        return {
+          totalPlays: 0,
+          uniqueScreens: 0,
+          uniqueAssets: 0,
+          totalDuration: 0,
+          averageDuration: 0,
+          dateRange: { start: '', end: '' }
+        };
+      }
+      
       const uniqueScreens = new Set(records.map(r => r.screenUUID)).size;
       const uniqueAssets = new Set(records.map(r => r.assetId)).size;
       const totalDuration = records.reduce((sum, r) => sum + r.duration, 0);
@@ -298,7 +537,15 @@ export class ProofOfPlayService {
       };
     } catch (error) {
       console.error('Error getting Proof-of-Play summary:', error);
-      throw error;
+      // Return empty summary instead of throwing
+      return {
+        totalPlays: 0,
+        uniqueScreens: 0,
+        uniqueAssets: 0,
+        totalDuration: 0,
+        averageDuration: 0,
+        dateRange: { start: '', end: '' }
+      };
     }
   }
 }

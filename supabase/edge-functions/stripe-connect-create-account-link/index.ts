@@ -46,12 +46,40 @@ serve(async (req: Request) => {
     let accountId: string
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_connect_account_id')
+      .select('stripe_connect_account_id, email')
       .eq('id', hostId)
       .single()
 
     if (profile?.stripe_connect_account_id) {
-      accountId = profile.stripe_connect_account_id
+      // Verify the existing account is still valid
+      try {
+        const existingAccount = await stripe.accounts.retrieve(profile.stripe_connect_account_id)
+        if (existingAccount && !existingAccount.deleted) {
+          accountId = profile.stripe_connect_account_id
+        } else {
+          // Account was deleted, create a new one
+          throw new Error('Account deleted')
+        }
+      } catch (error) {
+        console.log('Existing account invalid, creating new one:', error.message)
+        // Create new Stripe Connect account
+        const account = await stripe.accounts.create({
+          type: 'express',
+          country: 'US',
+          email: profile?.email,
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+        })
+        accountId = account.id
+
+        // Save new account ID to profile
+        await supabase
+          .from('profiles')
+          .update({ stripe_connect_account_id: accountId })
+          .eq('id', hostId)
+      }
     } else {
       // Create new Stripe Connect account
       const account = await stripe.accounts.create({
@@ -73,6 +101,7 @@ serve(async (req: Request) => {
     }
 
     // Create account link
+    console.log('Creating account link for account:', accountId)
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: refreshUrl,
@@ -80,6 +109,7 @@ serve(async (req: Request) => {
       type: 'account_onboarding',
     })
 
+    console.log('Account link created successfully:', accountLink.id)
     return new Response(JSON.stringify({ url: accountLink.url }), {
       headers: { ...corsHeaders, 'content-type': 'application/json' }
     })

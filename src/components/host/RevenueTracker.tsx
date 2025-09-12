@@ -3,6 +3,7 @@ import { DollarSign, TrendingUp, Calendar, BarChart3, Eye, MousePointer, Target,
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { HostService, HostRevenue } from '../../services/hostService';
+import ProofOfPlayWidget from '../shared/ProofOfPlayWidget';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -364,6 +365,23 @@ export default function RevenueTracker() {
           </table>
         </div>
       </Card>
+
+      {/* PoP Information for Revenue Analysis */}
+      <ProofOfPlayWidget
+        accountId={user?.id}
+        title="Play Activity & Revenue Correlation"
+        showTable={true}
+        showExport={true}
+        maxRecords={20}
+        dateRange={{
+          startDate: timeRange === '7d' 
+            ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            : timeRange === '30d'
+            ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0]
+        }}
+      />
     </div>
   );
 }

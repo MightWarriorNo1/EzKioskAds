@@ -38,7 +38,7 @@ export default function AuthLayout({ children, title = 'Welcome to EZ Kiosk Ads'
 
         <div className="relative max-w-7xl mx-auto px-6 pt-12 pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="max-w-2xl animate-fadeInUp">
+            <div className="max-w-2xl animate-fadeInUp order-2 lg:order-1">
               <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 text-sm font-medium mb-6">
                 <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2 animate-pulse"></span>
                 Digital Advertising Platform
@@ -88,7 +88,7 @@ export default function AuthLayout({ children, title = 'Welcome to EZ Kiosk Ads'
               </div>
             </div>
 
-            <div className="w-full max-w-md mx-auto lg:ml-auto animate-fadeInUp" style={{animationDelay: '0.2s'}}>
+            <div className="w-full max-w-md mx-auto lg:ml-auto animate-fadeInUp order-1 lg:order-2" style={{animationDelay: '0.2s'}}>
               <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl shadow-2xl ring-1 ring-gray-200/50 dark:ring-slate-700/50 p-8 hover:shadow-3xl transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent dark:from-slate-800/50 rounded-2xl pointer-events-none"></div>
                 

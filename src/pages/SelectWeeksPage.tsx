@@ -29,7 +29,8 @@ function getMonthGrid(date: Date) {
 export default function SelectWeeksPage() {
   const navigate = useNavigate();
   const location = useLocation() as { state?: any };
-  const kiosk = location.state?.kiosk;
+  const kiosks = (location.state?.kiosks || []).slice(0, 1); // currently schedule one calendar flow; extend later per kiosk
+  const kiosk = kiosks[0] || location.state?.kiosk; // backward compatibility
   const weeklyRate = getWeeklyRate(kiosk?.price);
 
   const steps = [
@@ -192,6 +193,20 @@ export default function SelectWeeksPage() {
           <div className="text-sm text-gray-500 dark:text-gray-400">{kiosk?.city || 'Location'}</div>
         </div>
         
+        {/* Selected kiosks compact summary if multiple */}
+        {Array.isArray(location.state?.kiosks) && location.state?.kiosks.length > 1 && (
+          <div className="mb-6 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-700 dark:text-gray-300">
+            <div className="font-semibold mb-2">Multiple kiosks selected</div>
+            <div className="flex flex-wrap gap-2">
+              {location.state.kiosks.map((k: any) => (
+                <span key={k.id} className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <MapPin className="h-3 w-3" /> {k.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Enhanced Kiosk Summary */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 border border-blue-200 dark:border-gray-600 rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between">
@@ -215,7 +230,7 @@ export default function SelectWeeksPage() {
           Weekly Selection — Select weeks (Monday to Sunday) for your campaign.
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-6 md:mb-8">
           <button 
             onClick={() => setBookingType('weekly')}
             className={`group relative border-2 rounded-xl p-4 md:p-6 text-left shadow-soft hover:shadow-elevated transition-all duration-200 ${
@@ -322,7 +337,8 @@ export default function SelectWeeksPage() {
                         : selectedMondays.includes(fmt(c))
                           ? 'bg-blue-500 text-white shadow-lg scale-105 ring-2 ring-blue-200 dark:ring-blue-800' 
                           : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 border border-transparent'
-                    }`}>
+                    }`}
+                  >
                     {c.getDate()}
                   </button>
                 ) : <div key={i} />)}
@@ -532,7 +548,8 @@ export default function SelectWeeksPage() {
                          : subStartMonday === fmt(c) 
                            ? 'bg-blue-500 text-white shadow-lg scale-105 ring-2 ring-blue-200 dark:ring-blue-800' 
                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 border border-transparent'
-                     }`}>
+                     }`}
+                   >
                      {c.getDate()}
                    </button>
                  ) : <div key={i} />)}
@@ -580,7 +597,8 @@ export default function SelectWeeksPage() {
                 
                 if (bookingType === 'weekly') {
                   campaignData = {
-                    kiosk,
+                    kiosks: kiosks.length ? kiosks : kiosk ? [kiosk] : [],
+                    kiosk: kiosk,
                     selectedWeeks: selectedMondays.map(date => ({
                       startDate: date,
                       endDate: new Date(new Date(date).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -592,7 +610,8 @@ export default function SelectWeeksPage() {
                 } else {
                   // Subscription case
                   campaignData = {
-                    kiosk,
+                    kiosks: kiosks.length ? kiosks : kiosk ? [kiosk] : [],
+                    kiosk: kiosk,
                     selectedWeeks: [{
                       startDate: subStartMonday!,
                       endDate: new Date(new Date(subStartMonday!).getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

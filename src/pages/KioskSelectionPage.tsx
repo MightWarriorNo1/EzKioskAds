@@ -22,7 +22,7 @@ export default function KioskSelectionPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedKiosk, setSelectedKiosk] = useState<KioskData | null>(null);
+  const [selectedKioskIds, setSelectedKioskIds] = useState<string[]>([]);
   const [showContentModal, setShowContentModal] = useState(false);
 
   const steps = [
@@ -99,6 +99,13 @@ export default function KioskSelectionPage() {
     (kiosk.address && kiosk.address.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const toggleSelect = (kioskId?: string) => {
+    if (!kioskId) return;
+    setSelectedKioskIds(prev => prev.includes(kioskId) ? prev.filter(id => id !== kioskId) : [...prev, kioskId]);
+  };
+
+  const selectedKiosks = kioskData.filter(k => selectedKioskIds.includes(k.id || ''));
+
   return (
     <DashboardLayout
       title="Create New Campaign"
@@ -173,7 +180,7 @@ export default function KioskSelectionPage() {
       {/* Section Title */}
       <div className="mb-6 md:mb-8">
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Kiosk</h2>
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Select a kiosk for your advertising campaign</p>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Select one or more kiosks for your advertising campaign</p>
       </div>
 
       {/* Search Bar */}
@@ -223,15 +230,55 @@ export default function KioskSelectionPage() {
       {/* Content Area */}
       <div className="mb-6 md:mb-8">
         {viewMode === 'map' ? (
-          <div className="h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-elevated">
-            <LeafletMap
-              center={[33.5689, -117.1865]}
-              zoom={11}
-              className="h-full w-full"
-              kioskData={filteredKiosks}
-              onKioskSelect={(k) => setSelectedKiosk(k)}
-              selectedKioskIds={selectedKiosk && selectedKiosk.id ? [selectedKiosk.id] : []}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-elevated md:col-span-2">
+              <LeafletMap
+                center={[33.5689, -117.1865]}
+                zoom={11}
+                className="h-full w-full"
+                kioskData={filteredKiosks}
+                onKioskSelect={(k) => toggleSelect(k?.id)}
+                selectedKioskIds={selectedKioskIds}
+              />
+            </div>
+            <div className="h-[400px] md:h-[600px] rounded-xl border border-gray-200 dark:border-gray-700 shadow-soft bg-white dark:bg-gray-800 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="font-semibold text-gray-900 dark:text-white">Kiosks</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{filteredKiosks.length} found</div>
+              </div>
+              <div className="h-full overflow-y-auto p-3 md:p-4 space-y-3">
+                {filteredKiosks.map((kiosk) => (
+                  <div key={kiosk.id} className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-white dark:bg-gray-800 hover:shadow-elevated transition-shadow ${selectedKioskIds.includes(kiosk.id || '') ? 'ring-2 ring-primary-500' : ''}`}> 
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-gray-900 dark:text-white truncate">{kiosk.name}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{kiosk.address}</div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            kiosk.traffic === 'High Traffic'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                              : kiosk.traffic === 'Medium Traffic'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                          }`}>{kiosk.traffic}</span>
+                          <span className="text-xs text-green-600 dark:text-green-400 font-semibold">{kiosk.price}</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => toggleSelect(kiosk.id)}
+                        className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          selectedKioskIds.includes(kiosk.id || '')
+                            ? 'bg-green-600 text-white'
+                            : 'bg-black dark:bg-gray-900 text-white hover:bg-gray-800 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {selectedKioskIds.includes(kiosk.id || '') ? 'Selected' : 'Select'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,13 +308,13 @@ export default function KioskSelectionPage() {
                     </div>
                   </div>
                   <button 
-                    onClick={() => setSelectedKiosk(kiosk)}
+                    onClick={() => toggleSelect(kiosk.id)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full md:w-auto ${
-                      selectedKiosk?.id === kiosk.id
-                        ? 'bg-green-600 text-white cursor-default'
+                      selectedKioskIds.includes(kiosk.id || '')
+                        ? 'bg-green-600 text-white'
                         : 'bg-black dark:bg-gray-900 text-white hover:bg-gray-800 dark:hover:bg-gray-700'
                     }`}>
-                    {selectedKiosk?.id === kiosk.id ? 'Selected' : 'Select'}
+                    {selectedKioskIds.includes(kiosk.id || '') ? 'Selected' : 'Select'}
                   </button>
                 </div>
               </div>
@@ -276,34 +323,30 @@ export default function KioskSelectionPage() {
         )}
       </div>
 
-      {/* Selected Kiosk Summary */}
-      {selectedKiosk && (
+      {/* Selected Kiosks Summary */}
+      {selectedKioskIds.length > 0 && (
         <div className="mb-6 md:mb-8 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 bg-white dark:bg-gray-800 shadow-soft">
-          <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-2 text-gray-900 dark:text-white">Selected Kiosk</h3>
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-3 md:space-y-0">
-            <div className="flex-1">
-              <div className="font-bold text-gray-900 dark:text-white">{selectedKiosk.name}</div>
-              <div className="text-sm md:text-base text-gray-600 dark:text-gray-400">{selectedKiosk.city}</div>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">{selectedKiosk.address}</div>
-            </div>
-            <div className="flex flex-col md:text-right space-y-2 md:space-y-0">
-              <div className="text-green-600 dark:text-green-400 font-semibold">{selectedKiosk.price}</div>
-              <button 
-                onClick={() => setSelectedKiosk(null)}
-                className="text-sm text-gray-600 dark:text-gray-300 underline hover:text-gray-900 dark:hover:text-white w-fit">
-                Clear selection
-              </button>
-            </div>
+          <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-2 text-gray-900 dark:text-white">Selected Kiosks</h3>
+          <div className="flex flex-wrap gap-2">
+            {selectedKiosks.map(k => (
+              <span key={k.id} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600">
+                {k.name}
+                <button onClick={() => toggleSelect(k.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-white">×</button>
+              </span>
+            ))}
           </div>
         </div>
       )}
 
       {/* Continue Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div className="text-xs text-gray-600 dark:text-gray-300">
+          {selectedKioskIds.length} selected
+        </div>
         <button 
-          disabled={!selectedKiosk}
+          disabled={selectedKioskIds.length === 0}
           onClick={() => setShowContentModal(true)}
-          className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-soft text-sm md:text-base ${selectedKiosk ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}`}>
+          className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-soft text-sm md:text-base ${selectedKioskIds.length > 0 ? 'bg-primary-600 hover:bg-primary-700 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}`}>
           <span className="hidden md:inline">Continue to Select Weeks</span>
           <span className="md:hidden">Continue</span>
         </button>
@@ -313,7 +356,7 @@ export default function KioskSelectionPage() {
       {showContentModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md md:max-w-lg p-4 md:p-6 shadow-elevated border border-gray-200 dark:border-gray-700">
-            <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Limitations for {selectedKiosk?.name}</div>
+            <div className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-1">Content Limitations</div>
             <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-4">Please review these content restrictions before proceeding</div>
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-4 mb-4 bg-gray-50 dark:bg-gray-800">
               <div className="font-semibold text-gray-900 dark:text-white mb-1 text-sm md:text-base">Important Notice</div>
@@ -325,7 +368,7 @@ export default function KioskSelectionPage() {
             </div>
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
               <button onClick={() => setShowContentModal(false)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm md:text-base">Cancel</button>
-              <button onClick={() => navigate('/client/select-weeks', { state: { kiosk: selectedKiosk } })} className="px-4 py-2 rounded-lg bg-black dark:bg-gray-900 text-white text-sm md:text-base">I Understand & Accept</button>
+              <button onClick={() => navigate('/client/select-weeks', { state: { kiosks: selectedKiosks } })} className="px-4 py-2 rounded-lg bg-black dark:bg-gray-900 text-white text-sm md:text-base">I Understand & Accept</button>
             </div>
           </div>
         </div>

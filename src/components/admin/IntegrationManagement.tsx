@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plug, CheckCircle, XCircle, AlertCircle, RefreshCw, ExternalLink, Settings } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { AdminService, SystemIntegration } from '../../services/adminService';
@@ -86,7 +86,12 @@ export default function IntegrationManagement() {
           break;
         case 'stripe':
           // Redirect to Stripe Connect
-          const stripeAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${process.env.REACT_APP_STRIPE_CLIENT_ID}&scope=read_write`;
+          const stripeClientId = import.meta.env.VITE_STRIPE_CLIENT_ID;
+          if (!stripeClientId) {
+            addNotification('error', 'Configuration Error', 'Stripe Client ID not configured');
+            return;
+          }
+          const stripeAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${stripeClientId}&scope=read_write`;
           window.open(stripeAuthUrl, '_blank');
           break;
         default:
@@ -116,7 +121,7 @@ export default function IntegrationManagement() {
       
       setIntegrations(prev => prev.map(int => 
         int.id === integration.id 
-          ? { ...int, status: 'disconnected', config: {}, last_sync: null }
+          ? { ...int, status: 'disconnected', config: {}, last_sync: undefined }
           : int
       ));
 
@@ -147,22 +152,6 @@ export default function IntegrationManagement() {
     }
   };
 
-  const getIntegrationDescription = (type: string) => {
-    switch (type) {
-      case 'gmail':
-        return 'Send automated emails for ad approvals, rejections, and notifications';
-      case 'google_drive':
-        return 'Manage asset lifecycle with automatic archiving and deletion';
-      case 'stripe':
-        return 'Process client payments and manage billing';
-      case 'stripe_connect':
-        return 'Handle host payouts and commission distribution';
-      case 'google_oauth':
-        return 'Enable Google sign-in for users';
-      default:
-        return 'Integration description not available';
-    }
-  };
 
   const getIntegrationSetupUrl = (type: string) => {
     switch (type) {
@@ -184,8 +173,8 @@ export default function IntegrationManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Integration Management</h1>
-          <p className="text-gray-600 mt-2">Connect and manage third-party services for enhanced functionality</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Integration Management</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Connect and manage third-party services for enhanced functionality</p>
         </div>
         <button
           onClick={loadIntegrations}
@@ -202,7 +191,7 @@ export default function IntegrationManagement() {
         {loading ? (
           <div className="text-center py-8">
             <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading integrations...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading integrations...</p>
           </div>
         ) : (
           [
@@ -235,9 +224,11 @@ export default function IntegrationManagement() {
             const integration = integrations.find(int => int.type === integrationTemplate.type) || {
               id: integrationTemplate.type,
               name: integrationTemplate.name,
-              type: integrationTemplate.type,
-              status: 'disconnected',
+              type: integrationTemplate.type as 'stripe' | 'stripe_connect' | 'gmail' | 'google_drive' | 'google_oauth',
+              status: 'disconnected' as const,
               config: {},
+              last_sync: undefined,
+              error_message: undefined,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             };
@@ -246,22 +237,22 @@ export default function IntegrationManagement() {
             const setupUrl = getIntegrationSetupUrl(integration.type);
 
             return (
-              <div key={integration.type} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div key={integration.type} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="p-3 bg-purple-100 rounded-lg">
                       <Plug className="h-6 w-6 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{integration.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{integrationTemplate.description}</p>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{integration.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{integrationTemplate.description}</p>
                       <div className="flex items-center space-x-2 mt-2">
                         <StatusIcon className={`h-4 w-4 ${getStatusColor(integration.status)}`} />
                         <span className={`text-sm font-medium ${getStatusColor(integration.status)}`}>
                           {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
                         </span>
                         {integration.last_sync && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             Last sync: {new Date(integration.last_sync).toLocaleDateString()}
                           </span>
                         )}
@@ -274,7 +265,7 @@ export default function IntegrationManagement() {
                         href={setupUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Settings className="h-4 w-4" />
                         <span>Setup</span>
@@ -319,7 +310,7 @@ export default function IntegrationManagement() {
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <AlertCircle className="h-4 w-4 text-red-600" />
-                      <span className="text-sm text-red-800">Error: {integration.error_message}</span>
+                      <span className="text-sm text-red-800 dark:text-red-400">Error: {integration.error_message}</span>
                     </div>
                   </div>
                 )}
@@ -328,7 +319,7 @@ export default function IntegrationManagement() {
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-800">
+                      <span className="text-sm text-green-800 dark:text-green-400">
                         Connected successfully. Configuration details are stored securely.
                       </span>
                     </div>
@@ -341,34 +332,34 @@ export default function IntegrationManagement() {
       </div>
 
       {/* Integration Status Summary */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Integration Status Summary</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Integration Status Summary</h3>
         <div className="grid md:grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
               {integrations.filter(int => int.status === 'connected').length}
             </div>
-            <div className="text-sm text-gray-600">Connected</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Connected</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-600">
               {integrations.filter(int => int.status === 'disconnected').length}
             </div>
-            <div className="text-sm text-gray-600">Disconnected</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Disconnected</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-red-600">
               {integrations.filter(int => int.status === 'error').length}
             </div>
-            <div className="text-sm text-gray-600">Errors</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Errors</div>
           </div>
         </div>
       </div>
 
       {/* Setup Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">Setup Instructions</h3>
-        <div className="space-y-3 text-sm text-blue-800">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3">Setup Instructions</h3>
+        <div className="space-y-3 text-sm text-blue-800 dark:text-blue-300">
           <p><strong>Gmail API:</strong> Enable Gmail API in Google Cloud Console and create OAuth 2.0 credentials.</p>
           <p><strong>Google Drive:</strong> Enable Google Drive API and create OAuth 2.0 credentials with drive scope.</p>
           <p><strong>Stripe:</strong> Create a Stripe account and obtain API keys from the dashboard.</p>

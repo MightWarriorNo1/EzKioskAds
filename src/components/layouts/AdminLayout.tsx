@@ -72,11 +72,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               {/* Theme Toggle */}
               <ThemeToggle variant="dropdown" size="md" />
               
-              {/* Notifications */}
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
               
               {/* Mobile User Menu */}
               <div className="lg:hidden relative">

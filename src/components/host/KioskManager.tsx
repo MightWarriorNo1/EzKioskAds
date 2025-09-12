@@ -3,6 +3,7 @@ import { Monitor, MapPin, Wifi, WifiOff, Settings, BarChart3, Plus, Eye, DollarS
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { HostService, HostKiosk } from '../../services/hostService';
+import ProofOfPlayWidget from '../shared/ProofOfPlayWidget';
 import LeafletMap from '../MapContainer';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -254,6 +255,19 @@ export default function KioskManager() {
         </Card>
       )}
 
+      {/* PoP Information for All Kiosks */}
+      <ProofOfPlayWidget
+        accountId={user?.id}
+        title="Play Activity Across All Kiosks"
+        showTable={true}
+        showExport={true}
+        maxRecords={20}
+        dateRange={{
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0]
+        }}
+      />
+
       {/* Selected Kiosk Details */}
       {selectedKiosk && (
         <Card className="p-6">
@@ -325,6 +339,21 @@ export default function KioskManager() {
               <p className="text-sm text-gray-600 dark:text-gray-400">{selectedKiosk.kiosk.description}</p>
             </div>
           )}
+
+          {/* PoP Information for Selected Kiosk */}
+          <div className="mt-6">
+            <ProofOfPlayWidget
+              accountId={user?.id}
+              kioskId={selectedKiosk.kiosk.id}
+              title={`Play Activity - ${selectedKiosk.kiosk.name}`}
+              showTable={true}
+              maxRecords={10}
+              dateRange={{
+                startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0]
+              }}
+            />
+          </div>
         </Card>
       )}
     </div>

@@ -4,6 +4,7 @@ import { Calendar, MapPin, Play, Pause, Edit, BarChart3, Plus, Eye, Clock, Check
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { HostService, HostAdAssignment, HostAd, HostKiosk } from '../../services/hostService';
+import ProofOfPlayWidget from '../shared/ProofOfPlayWidget';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -397,6 +398,19 @@ export default function AdAssignment() {
         </div>
       </Card>
 
+      {/* PoP Information for Ad Assignments */}
+      <ProofOfPlayWidget
+        accountId={user?.id}
+        title="Play Activity for Assigned Ads"
+        showTable={true}
+        showExport={true}
+        maxRecords={15}
+        dateRange={{
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0]
+        }}
+      />
+
       {/* Assignment Details Modal */}
       {selectedAssignment && (
         <Card className="p-6">
@@ -472,6 +486,22 @@ export default function AdAssignment() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* PoP Information for Selected Assignment */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <ProofOfPlayWidget
+              accountId={user?.id}
+              campaignId={selectedAssignment.campaign_id}
+              kioskId={selectedAssignment.kiosk_id}
+              title={`Play Activity - ${selectedAssignment.ad.name}`}
+              showTable={true}
+              maxRecords={10}
+              dateRange={{
+                startDate: selectedAssignment.start_date,
+                endDate: selectedAssignment.end_date
+              }}
+            />
           </div>
         </Card>
       )}

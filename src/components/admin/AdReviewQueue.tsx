@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckSquare, X, Eye, Clock, AlertCircle, Check, RefreshCw } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { AdminService, AdReviewItem } from '../../services/adminService';
 
 export default function AdReviewQueue() {
   const [ads, setAds] = useState<AdReviewItem[]>([]);
+  const [hostAds, setHostAds] = useState<any[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdReviewItem | null>(null);
+  const [selectedHostAd, setSelectedHostAd] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'client' | 'host'>('client');
   const { addNotification } = useNotification();
 
   useEffect(() => {
@@ -19,8 +22,9 @@ export default function AdReviewQueue() {
   const loadAdReviewQueue = async () => {
     try {
       setLoading(true);
-      const reviewQueue = await AdminService.getAdReviewQueue();
-      setAds(reviewQueue);
+      const { clientAds, hostAds } = await AdminService.getAllAdsForReview();
+      setAds(clientAds);
+      setHostAds(hostAds);
     } catch (error) {
       console.error('Error loading ad review queue:', error);
       addNotification('error', 'Error', 'Failed to load ad review queue');
@@ -61,6 +65,38 @@ export default function AdReviewQueue() {
     }
   };
 
+  const handleApproveHostAd = async (hostAdId: string) => {
+    try {
+      setReviewing(hostAdId);
+      await AdminService.reviewHostAd(hostAdId, 'approve');
+      setHostAds(prev => prev.filter(ad => ad.id !== hostAdId));
+      addNotification('success', 'Host Ad Approved', 'The host ad has been approved and is now live. Host has been notified via email.');
+      setSelectedHostAd(null);
+    } catch (error) {
+      console.error('Error approving host ad:', error);
+      addNotification('error', 'Error', 'Failed to approve host ad');
+    } finally {
+      setReviewing(null);
+    }
+  };
+
+  const handleRejectHostAd = async (hostAdId: string, reason?: string) => {
+    try {
+      setReviewing(hostAdId);
+      await AdminService.reviewHostAd(hostAdId, 'reject', reason);
+      setHostAds(prev => prev.filter(ad => ad.id !== hostAdId));
+      addNotification('success', 'Host Ad Rejected', 'The host ad has been rejected. Host has been notified via email.');
+      setSelectedHostAd(null);
+      setShowRejectionModal(false);
+      setRejectionReason('');
+    } catch (error) {
+      console.error('Error rejecting host ad:', error);
+      addNotification('error', 'Error', 'Failed to reject host ad');
+    } finally {
+      setReviewing(null);
+    }
+  };
+
   const openRejectionModal = () => {
     setShowRejectionModal(true);
   };
@@ -95,8 +131,8 @@ export default function AdReviewQueue() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ad Review Queue</h1>
-          <p className="text-gray-600 mt-2">Review and approve submitted advertisements</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ad Review Queue</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Review and approve submitted advertisements</p>
         </div>
         <button
           onClick={loadAdReviewQueue}
@@ -110,11 +146,11 @@ export default function AdReviewQueue() {
 
       {/* Queue Stats */}
       <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Pending Review</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{ads.filter(a => a.status === 'processing').length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Review</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{ads.filter(a => a.status === 'processing').length}</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <Clock className="h-6 w-6 text-yellow-600" />
@@ -122,11 +158,11 @@ export default function AdReviewQueue() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Uploading</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{ads.filter(a => a.status === 'uploading').length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Uploading</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{ads.filter(a => a.status === 'uploading').length}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg">
               <Eye className="h-6 w-6 text-blue-600" />
@@ -134,11 +170,11 @@ export default function AdReviewQueue() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Queue</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{ads.length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Queue</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{ads.length}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
               <AlertCircle className="h-6 w-6 text-purple-600" />
@@ -146,11 +182,11 @@ export default function AdReviewQueue() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">With Errors</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{ads.filter(a => a.validation_errors && a.validation_errors.length > 0).length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">With Errors</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{ads.filter(a => a.validation_errors && a.validation_errors.length > 0).length}</p>
             </div>
             <div className="p-3 bg-red-50 rounded-lg">
               <AlertCircle className="h-6 w-6 text-red-600" />
@@ -163,45 +199,82 @@ export default function AdReviewQueue() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Queue List */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Review Queue</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Review Queue</h3>
+                <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveTab('client')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'client'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Client Ads ({ads.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('host')}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'host'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Host Ads ({hostAds.length})
+                  </button>
+                </div>
+              </div>
             </div>
             
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <div className="p-6 text-center">
                   <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-500">Loading ad review queue...</p>
+                  <p className="text-gray-500 dark:text-gray-400">Loading ad review queue...</p>
                 </div>
-              ) : ads.length === 0 ? (
+              ) : (activeTab === 'client' ? ads : hostAds).length === 0 ? (
                 <div className="p-6 text-center">
                   <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No ads to review</h3>
-                  <p className="text-gray-500">All caught up! Check back later for new submissions.</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No {activeTab} ads to review</h3>
+                  <p className="text-gray-500 dark:text-gray-400">All caught up! Check back later for new submissions.</p>
                 </div>
               ) : (
-                ads.map((ad) => (
+                (activeTab === 'client' ? ads : hostAds).map((ad) => (
                   <div
                     key={ad.id}
-                    className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      selectedAd?.id === ad.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                    className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                      (activeTab === 'client' ? selectedAd?.id === ad.id : selectedHostAd?.id === ad.id) ? 'bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500' : ''
                     }`}
-                    onClick={() => setSelectedAd(ad)}
+                    onClick={() => {
+                      if (activeTab === 'client') {
+                        setSelectedAd(ad);
+                        setSelectedHostAd(null);
+                      } else {
+                        setSelectedHostAd(ad);
+                        setSelectedAd(null);
+                      }
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="w-16 h-28 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                           <img 
-                            src={getFilePreview(ad.file_type, ad.file_path)} 
+                            src={activeTab === 'client' ? getFilePreview(ad.file_type, ad.file_path) : ad.media_url} 
                             alt="Preview" 
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900">{ad.file_name}</h4>
-                          <p className="text-sm text-gray-600">by {ad.user.full_name} ({ad.user.company_name || ad.user.email})</p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {activeTab === 'client' ? ad.file_name : ad.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            by {activeTab === 'client' ? ad.user.full_name : ad.host.full_name} 
+                            ({activeTab === 'client' ? (ad.user.company_name || ad.user.email) : (ad.host.company_name || ad.host.email)})
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Uploaded {new Date(ad.created_at).toLocaleDateString()}
                           </p>
                           <div className="flex items-center space-x-2 mt-2">
@@ -209,11 +282,16 @@ export default function AdReviewQueue() {
                               {ad.status}
                             </span>
                             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                              {ad.file_type}
+                              {activeTab === 'client' ? ad.file_type : ad.media_type}
                             </span>
-                            {ad.campaign && (
+                            {activeTab === 'client' && ad.campaign && (
                               <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                 {ad.campaign.name}
+                              </span>
+                            )}
+                            {activeTab === 'host' && ad.duration && (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                {ad.duration}s
                               </span>
                             )}
                           </div>
@@ -221,7 +299,7 @@ export default function AdReviewQueue() {
                             <div className="mt-2">
                               <span className="text-xs text-red-600 font-medium">Validation Errors:</span>
                               <ul className="text-xs text-red-600 mt-1">
-                                {ad.validation_errors.map((error, index) => (
+                                {ad.validation_errors.map((error: string, index: number) => (
                                   <li key={index}>• {error}</li>
                                 ))}
                               </ul>
@@ -239,14 +317,14 @@ export default function AdReviewQueue() {
 
         {/* Review Panel */}
         <div className="lg:col-span-1">
-          {selectedAd ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Details</h3>
+          {(selectedAd || selectedHostAd) ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Review Details</h3>
               
               {/* Preview */}
               <div className="w-full h-48 bg-gray-200 rounded-lg overflow-hidden mb-4">
                 <img 
-                  src={getFilePreview(selectedAd.file_type, selectedAd.file_path)} 
+                  src={activeTab === 'client' ? getFilePreview(selectedAd!.file_type, selectedAd!.file_path) : selectedHostAd!.media_url} 
                   alt="Preview" 
                   className="w-full h-full object-cover"
                 />
@@ -254,43 +332,75 @@ export default function AdReviewQueue() {
 
               <div className="space-y-3 mb-6">
                 <div>
-                  <span className="text-sm font-medium text-gray-700">File Name:</span>
-                  <p className="text-sm text-gray-900">{selectedAd.file_name}</p>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Name:</span>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {activeTab === 'client' ? selectedAd!.file_name : selectedHostAd!.name}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Client:</span>
-                  <p className="text-sm text-gray-900">{selectedAd.user.full_name}</p>
-                  <p className="text-xs text-gray-500">{selectedAd.user.email}</p>
-                  {selectedAd.user.company_name && (
-                    <p className="text-xs text-gray-500">{selectedAd.user.company_name}</p>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {activeTab === 'client' ? 'Client:' : 'Host:'}
+                  </span>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {activeTab === 'client' ? selectedAd!.user.full_name : selectedHostAd!.host.full_name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {activeTab === 'client' ? selectedAd!.user.email : selectedHostAd!.host.email}
+                  </p>
+                  {(activeTab === 'client' ? selectedAd!.user.company_name : selectedHostAd!.host.company_name) && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {activeTab === 'client' ? selectedAd!.user.company_name : selectedHostAd!.host.company_name}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Type:</span>
-                  <p className="text-sm text-gray-900 capitalize">{selectedAd.file_type}</p>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Type:</span>
+                  <p className="text-sm text-gray-900 dark:text-white capitalize">
+                    {activeTab === 'client' ? selectedAd!.file_type : selectedHostAd!.media_type}
+                  </p>
                 </div>
-                {selectedAd.campaign && (
+                {activeTab === 'client' && selectedAd!.campaign && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Campaign:</span>
-                    <p className="text-sm text-gray-900">{selectedAd.campaign.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(selectedAd.campaign.start_date).toLocaleDateString()} - {new Date(selectedAd.campaign.end_date).toLocaleDateString()}
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Campaign:</span>
+                    <p className="text-sm text-gray-900 dark:text-white">{selectedAd!.campaign.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(selectedAd!.campaign.start_date).toLocaleDateString()} - {new Date(selectedAd!.campaign.end_date).toLocaleDateString()}
                     </p>
-                    <p className="text-xs text-gray-500">Budget: ${selectedAd.campaign.budget}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Budget: ${selectedAd!.campaign.budget}</p>
+                  </div>
+                )}
+                {activeTab === 'host' && selectedHostAd!.duration && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Duration:</span>
+                    <p className="text-sm text-gray-900 dark:text-white">{selectedHostAd!.duration} seconds</p>
+                  </div>
+                )}
+                {activeTab === 'host' && selectedHostAd!.description && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Description:</span>
+                    <p className="text-sm text-gray-900 dark:text-white">{selectedHostAd!.description}</p>
                   </div>
                 )}
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Upload Date:</span>
-                  <p className="text-sm text-gray-900">{new Date(selectedAd.created_at).toLocaleDateString()}</p>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Upload Date:</span>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {new Date((activeTab === 'client' ? selectedAd! : selectedHostAd!).created_at).toLocaleDateString()}
+                  </p>
                 </div>
-                {selectedAd.validation_errors && selectedAd.validation_errors.length > 0 && (
+                {activeTab === 'client' && selectedAd!.validation_errors && selectedAd!.validation_errors.length > 0 && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Validation Errors:</span>
-                    <ul className="text-sm text-red-600 mt-1">
-                      {selectedAd.validation_errors.map((error, index) => (
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Validation Errors:</span>
+                    <ul className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      {selectedAd!.validation_errors.map((error: string, index: number) => (
                         <li key={index}>• {error}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+                {activeTab === 'host' && selectedHostAd!.rejection_reason && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Previous Rejection Reason:</span>
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{selectedHostAd!.rejection_reason}</p>
                   </div>
                 )}
               </div>
@@ -298,11 +408,11 @@ export default function AdReviewQueue() {
               {/* Action Buttons */}
               <div className="space-y-3">
                 <button
-                  onClick={() => handleApprove(selectedAd.id)}
-                  disabled={reviewing === selectedAd.id}
+                  onClick={() => activeTab === 'client' ? handleApprove(selectedAd!.id) : handleApproveHostAd(selectedHostAd!.id)}
+                  disabled={reviewing === (activeTab === 'client' ? selectedAd!.id : selectedHostAd!.id)}
                   className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
-                  {reviewing === selectedAd.id ? (
+                  {reviewing === (activeTab === 'client' ? selectedAd!.id : selectedHostAd!.id) ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
                     <Check className="h-4 w-4" />
@@ -311,7 +421,7 @@ export default function AdReviewQueue() {
                 </button>
                 <button
                   onClick={openRejectionModal}
-                  disabled={reviewing === selectedAd.id}
+                  disabled={reviewing === (activeTab === 'client' ? selectedAd!.id : selectedHostAd!.id)}
                   className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <X className="h-4 w-4" />
@@ -320,47 +430,54 @@ export default function AdReviewQueue() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
               <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select an Ad</h3>
-              <p className="text-gray-500">Choose an ad from the queue to review</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Select an Ad</h3>
+              <p className="text-gray-500 dark:text-gray-400">Choose an ad from the queue to review</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Rejection Modal */}
-      {showRejectionModal && selectedAd && (
+      {showRejectionModal && (selectedAd || selectedHostAd) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Ad</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting this ad. The client will be notified via email.
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reject {activeTab === 'client' ? 'Ad' : 'Host Ad'}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Please provide a reason for rejecting this {activeTab === 'client' ? 'ad' : 'host ad'}. 
+              The {activeTab === 'client' ? 'client' : 'host'} will be notified via email.
             </p>
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Enter rejection reason..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none h-24 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={closeRejectionModal}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleReject(selectedAd.id, rejectionReason)}
-                disabled={!rejectionReason.trim() || reviewing === selectedAd.id}
+                onClick={() => {
+                  if (activeTab === 'client') {
+                    handleReject(selectedAd!.id, rejectionReason);
+                  } else {
+                    handleRejectHostAd(selectedHostAd!.id, rejectionReason);
+                  }
+                }}
+                disabled={!rejectionReason.trim() || reviewing === (activeTab === 'client' ? selectedAd!.id : selectedHostAd!.id)}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
               >
-                {reviewing === selectedAd.id ? (
+                {reviewing === (activeTab === 'client' ? selectedAd!.id : selectedHostAd!.id) ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
                   <X className="h-4 w-4" />
                 )}
-                <span>Reject Ad</span>
+                <span>Reject {activeTab === 'client' ? 'Ad' : 'Host Ad'}</span>
               </button>
             </div>
           </div>

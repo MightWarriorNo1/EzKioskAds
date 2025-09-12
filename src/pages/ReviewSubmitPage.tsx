@@ -5,6 +5,7 @@ import DashboardLayout from '../components/layouts/DashboardLayout';
 import { CampaignService } from '../services/campaignService';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { PricingService } from '../services/pricingService';
 
 interface SelectedWeek {
   startDate: string;
@@ -14,6 +15,7 @@ interface SelectedWeek {
 
 interface CampaignData {
   kiosk: any;
+  kiosks?: any[];
   selectedWeeks: SelectedWeek[];
   totalSlots: number;
   baseRate: number;
@@ -30,6 +32,7 @@ export default function ReviewSubmitPage() {
   
   const campaignData = location.state;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
   
   // Redirect if no campaign data or user not authenticated
   React.useEffect(() => {
@@ -42,12 +45,19 @@ export default function ReviewSubmitPage() {
       return;
     }
   }, [campaignData, user, navigate]);
+
+  React.useEffect(() => {
+    (async () => {
+      const percent = await PricingService.getAdditionalKioskDiscountPercent();
+      setDiscountPercent(percent);
+    })();
+  }, []);
   
   if (!campaignData || !user) {
     return null; // Will redirect
   }
   
-  const kiosk = campaignData.kiosk;
+  const kiosks = campaignData.kiosks && campaignData.kiosks.length ? campaignData.kiosks : (campaignData.kiosk ? [campaignData.kiosk] : []);
   const selectedWeeks = campaignData.selectedWeeks || [];
   const totalSlots = campaignData.totalSlots || 1;
   const baseRate = campaignData.baseRate || 40.00;
@@ -82,7 +92,13 @@ export default function ReviewSubmitPage() {
   };
 
   const calculateTotalCost = () => {
-    return totalSlots * baseRate;
+    const numKiosks = kiosks.length || 1;
+    return PricingService.calculateCampaignCost({
+      baseRatePerSlot: baseRate,
+      totalSlots,
+      numKiosks,
+      discountPercent
+    });
   };
 
   const handleSubmit = async () => {
@@ -92,7 +108,7 @@ export default function ReviewSubmitPage() {
     
     try {
       // Generate campaign name
-      const campaignName = `${kiosk.name} - ${selectedWeeks.length} week${selectedWeeks.length > 1 ? 's' : ''} campaign`;
+      const campaignName = `${kiosks.length > 1 ? `${kiosks[0]?.name} +${kiosks.length - 1}` : kiosks[0]?.name} - ${selectedWeeks.length} week${selectedWeeks.length > 1 ? 's' : ''} campaign`;
       
       // Calculate campaign dates
       const startDate = selectedWeeks[0]?.startDate;
@@ -102,18 +118,20 @@ export default function ReviewSubmitPage() {
         throw new Error('Invalid campaign dates');
       }
 
+      const totalCost = calculateTotalCost();
+
       // Create campaign
       const newCampaign = await CampaignService.createCampaign({
         name: campaignName,
-        description: `Campaign for ${kiosk.name} running for ${selectedWeeks.length} week${selectedWeeks.length > 1 ? 's' : ''}`,
+        description: `Campaign for ${kiosks.map(k => k.name).join(', ')} running for ${selectedWeeks.length} week${selectedWeeks.length > 1 ? 's' : ''}`,
         start_date: startDate,
         end_date: endDate,
-        budget: calculateTotalCost(),
+        budget: totalCost,
         total_slots: totalSlots,
-        total_cost: calculateTotalCost(),
+        total_cost: totalCost,
         user_id: user.id,
-        kiosk_ids: [kiosk.id],
-        target_locations: [kiosk.city],
+        kiosk_ids: kiosks.map(k => k.id),
+        target_locations: Array.from(new Set(kiosks.map(k => k.city).filter(Boolean))),
         media_asset_id: uploadedMediaAsset.id
       });
 
@@ -221,31 +239,26 @@ export default function ReviewSubmitPage() {
             <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
               <MapPin className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Selected Kiosk</h3>
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Selected Kiosk{ kiosks.length > 1 ? 's' : '' }</h3>
           </div>
-          
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4">
-            <div className="flex flex-col space-y-3">
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">{kiosk.name}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-xs md:text-sm mt-1">{kiosk.city}</p>
-                <p className="text-gray-500 dark:text-gray-500 text-xs md:text-sm">{kiosk.address}</p>
-                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${
-                    kiosk.traffic === 'High Traffic' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : kiosk.traffic === 'Medium Traffic'
-                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                  }`}>
-                    {kiosk.traffic}
-                  </span>
-                  <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                    {kiosk.price}
-                  </span>
+            {kiosks.length <= 1 ? (
+              <div className="flex flex-col space-y-3">
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">{kiosks[0]?.name}</h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs md:text-sm mt-1">{kiosks[0]?.city}</p>
+                  <p className="text-gray-500 dark:text-gray-500 text-xs md:text-sm">{kiosks[0]?.address}</p>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {kiosks.map((k) => (
+                  <span key={k.id} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600">
+                    {k.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -257,7 +270,6 @@ export default function ReviewSubmitPage() {
             </div>
             <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Selected Weeks</h3>
           </div>
-          
           <div className="space-y-3">
             {selectedWeeks.map((week, index) => (
               <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4">
@@ -292,7 +304,6 @@ export default function ReviewSubmitPage() {
             </div>
             <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Media Asset</h3>
           </div>
-          
           {uploadedMediaAsset && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4">
               <div className="flex items-center space-x-3 md:space-x-4">
@@ -338,11 +349,10 @@ export default function ReviewSubmitPage() {
             </div>
             <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Cost Summary</h3>
           </div>
-          
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Base rate per week:</span>
+                <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Base rate per slot:</span>
                 <span className="font-medium text-gray-900 dark:text-white text-xs md:text-sm">{formatCurrency(baseRate)}</span>
               </div>
               <div className="flex justify-between items-center">
@@ -353,6 +363,16 @@ export default function ReviewSubmitPage() {
                 <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Total slots:</span>
                 <span className="font-medium text-gray-900 dark:text-white text-xs md:text-sm">{totalSlots}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Number of kiosks:</span>
+                <span className="font-medium text-gray-900 dark:text-white text-xs md:text-sm">{kiosks.length}</span>
+              </div>
+              {kiosks.length > 1 && (
+                <div className="flex justify-between items-center text-green-700 dark:text-green-300">
+                  <span className="text-xs md:text-sm">Discount on each additional kiosk:</span>
+                  <span className="font-medium text-xs md:text-sm">{discountPercent}%</span>
+                </div>
+              )}
               <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">Total Cost:</span>

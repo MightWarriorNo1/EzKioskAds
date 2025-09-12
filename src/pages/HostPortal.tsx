@@ -7,6 +7,7 @@ import AdAssignment from '../components/host/AdAssignment';
 import AdUpload from '../components/host/AdUpload';
 import RevenueTracker from '../components/host/RevenueTracker';
 import PayoutHistory from '../components/host/PayoutHistory';
+import HostProofOfPlay from '../components/host/ProofOfPlay';
 
 export default function HostPortal() {
   return (
@@ -18,6 +19,7 @@ export default function HostPortal() {
         <Route path="/ads/upload" element={<AdUpload />} />
         <Route path="/revenue" element={<RevenueTracker />} />
         <Route path="/payouts" element={<PayoutHistory />} />
+        <Route path="/proof-of-play" element={<HostProofOfPlay />} />
       </Routes>
     </HostLayout>
   );
