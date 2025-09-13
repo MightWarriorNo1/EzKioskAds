@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { HostService, HostAd } from '../../services/hostService';
 import { supabase } from '../../lib/supabaseClient';
+import { validateFile } from '../../utils/fileValidation';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 
@@ -28,46 +29,56 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
     duration: 15
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [fileValidationError, setFileValidationError] = useState<string | null>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'];
-    
-    if (!validImageTypes.includes(file.type) && !validVideoTypes.includes(file.type)) {
-      addNotification('error', 'Invalid File Type', 'Please select a valid image or video file');
-      return;
-    }
+    // Clear previous validation errors
+    setFileValidationError(null);
+    setValidationErrors(prev => ({ ...prev, file: undefined }));
 
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      addNotification('error', 'File Too Large', 'File size must be less than 50MB');
-      return;
-    }
+    try {
+      // Use comprehensive validation
+      const validation = await validateFile(file);
+      
+      if (!validation.isValid) {
+        const errorMessage = validation.errors.join('. ');
+        setFileValidationError(errorMessage);
+        addNotification('error', 'File Validation Failed', errorMessage);
+        return;
+      }
 
-    // Determine media type
-    const isImage = validImageTypes.includes(file.type);
-    const isVideo = validVideoTypes.includes(file.type);
-    
-    setMediaType(isImage ? 'image' : 'video');
+      // Determine media type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      setMediaType(isImage ? 'image' : 'video');
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
 
-    // Auto-fill name if empty
-    if (!formData.name) {
-      setFormData(prev => ({
-        ...prev,
-        name: file.name.replace(/\.[^/.]+$/, '') // Remove file extension
-      }));
+      // Auto-fill name if empty
+      if (!formData.name) {
+        setFormData(prev => ({
+          ...prev,
+          name: file.name.replace(/\.[^/.]+$/, '') // Remove file extension
+        }));
+      }
+
+      // Show validation success message
+      addNotification('success', 'File Validated', 'File meets all requirements and is ready for upload');
+      
+    } catch (error) {
+      console.error('Validation error:', error);
+      const errorMessage = 'Failed to validate file. Please try again.';
+      setFileValidationError(errorMessage);
+      addNotification('error', 'Validation Error', errorMessage);
     }
   };
 
@@ -82,8 +93,8 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
       errors.file = 'Please select a file to upload';
     }
 
-    if (formData.duration < 5 || formData.duration > 60) {
-      errors.duration = 'Duration must be between 5 and 60 seconds';
+    if (formData.duration < 1 || formData.duration > 15) {
+      errors.duration = 'Duration must be between 1 and 15 seconds';
     }
 
     setValidationErrors(errors);
@@ -151,6 +162,7 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
       setMediaType(null);
       setFormData({ name: '', description: '', duration: 15 });
       setValidationErrors({});
+      setFileValidationError(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -227,6 +239,7 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
       setMediaType(null);
       setFormData({ name: '', description: '', duration: 15 });
       setValidationErrors({});
+      setFileValidationError(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -250,7 +263,9 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
             </label>
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                preview
+                fileValidationError
+                  ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
+                  : preview
                   ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
                   : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
               }`}
@@ -259,12 +274,29 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/jpeg,image/png,video/mp4"
                 onChange={handleFileSelect}
                 className="hidden"
               />
               
-              {preview ? (
+              {fileValidationError ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center">
+                    <AlertCircle className="h-12 w-12 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-medium text-red-900 dark:text-red-100">
+                      File Validation Failed
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-2">
+                      {fileValidationError}
+                    </p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-3">
+                      Please select a valid file that meets all requirements
+                    </p>
+                  </div>
+                </div>
+              ) : preview ? (
                 <div className="space-y-4">
                   {mediaType === 'image' ? (
                     <img
@@ -292,10 +324,10 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
                       Click to upload or drag and drop
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Images (JPG, PNG, GIF, WebP) or Videos (MP4, WebM, OGG, AVI, MOV)
+                      Images (JPG, PNG) or Videos (MP4)
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Maximum file size: 50MB
+                      Images: 10MB max • Videos: 500MB max • 9:16 aspect ratio required
                     </p>
                   </div>
                 </div>
@@ -336,8 +368,8 @@ export default function AdUpload({ onUploadComplete, onCancel }: AdUploadProps) 
               </label>
               <input
                 type="number"
-                min="5"
-                max="60"
+                min="1"
+                max="15"
                 value={formData.duration}
                 onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 15 }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"

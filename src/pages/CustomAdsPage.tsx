@@ -26,6 +26,7 @@ import { BillingService } from '../services/billingService';
 import { CustomAdsService } from '../services/customAdsService';
 import PaymentMethodSelector from '../components/PaymentMethodSelector';
 import { PaymentMethod } from '../types/database';
+import { validateFile } from '../utils/fileValidation';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 interface ServiceTile {
@@ -97,6 +98,7 @@ export default function CustomAdsPage() {
     files: []
   });
   const [formErrors, setFormErrors] = useState<Partial<OrderFormData>>({});
+  const [fileValidationErrors, setFileValidationErrors] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'form' | 'pay' | 'method'>('form');
@@ -160,11 +162,9 @@ export default function CustomAdsPage() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     const maxFiles = 5;
-    const maxPhotoSize = 10 * 1024 * 1024; // 10MB
-    const maxVideoSize = 500 * 1024 * 1024; // 500MB
 
     if (files.length + formData.files.length > maxFiles) {
       alert(`Maximum ${maxFiles} files allowed`);
@@ -174,27 +174,36 @@ export default function CustomAdsPage() {
     const validFiles: File[] = [];
     const errors: string[] = [];
 
-    files.forEach(file => {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-      const maxSize = isVideo ? maxVideoSize : maxPhotoSize;
+    // Clear previous validation errors
+    setFileValidationErrors([]);
 
-      if (!isVideo && !isImage) {
-        errors.push(`${file.name}: Only images and videos are allowed`);
-        return;
+    for (const file of files) {
+      try {
+        // Use comprehensive validation
+        const validation = await validateFile(file);
+        
+        if (!validation.isValid) {
+          const errorMessage = `${file.name}: ${validation.errors.join(', ')}`;
+          errors.push(errorMessage);
+          continue;
+        }
+        
+        validFiles.push(file);
+      } catch (error) {
+        console.error('Validation error for file:', file.name, error);
+        const errorMessage = `${file.name}: Failed to validate file`;
+        errors.push(errorMessage);
+        continue;
       }
+    }
 
-      if (file.size > maxSize) {
-        const sizeLimit = isVideo ? '500MB' : '10MB';
-        errors.push(`${file.name}: File size exceeds ${sizeLimit} limit`);
-        return;
-      }
-
-      validFiles.push(file);
-    });
+    // Set validation errors for display
+    setFileValidationErrors(errors);
 
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      // Show notification for validation errors
+      const errorMessage = errors.length === 1 ? errors[0] : `${errors.length} files failed validation`;
+      alert(errorMessage);
     }
 
     if (validFiles.length > 0) {
@@ -587,7 +596,7 @@ export default function CustomAdsPage() {
                       ref={fileInputRef}
                       type="file"
                       multiple
-                      accept="image/*,video/*"
+                      accept="image/jpeg,image/png,video/mp4"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -596,7 +605,7 @@ export default function CustomAdsPage() {
                       Click to upload or drag and drop
                     </p>
                     <p className="text-sm text-gray-500">
-                      Images: 10MB max • Videos: 500MB max
+                      Images: 10MB max • Videos: 500MB max • 9:16 aspect ratio required
                     </p>
                     <Button
                       type="button"
@@ -607,6 +616,34 @@ export default function CustomAdsPage() {
                       Choose Files
                     </Button>
                   </div>
+
+                  {/* File Validation Errors */}
+                  {fileValidationErrors.length > 0 && (
+                    <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <AlertCircle className="h-5 w-5 text-red-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                            File Validation Errors
+                          </h3>
+                          <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                            <ul className="list-disc list-inside space-y-1">
+                              {fileValidationErrors.map((error, index) => (
+                                <li key={index}>{error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="mt-3">
+                            <p className="text-xs text-red-600 dark:text-red-400">
+                              Please ensure your files meet all requirements: JPG/PNG images (10MB max), MP4 videos (500MB max), 9:16 aspect ratio, and 1080×1920 or 2160×3840 resolution.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* File List */}
                   {formData.files.length > 0 && (

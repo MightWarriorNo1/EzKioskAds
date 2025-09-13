@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, Image, Play, BarChart3, Zap, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
+import { validateFile } from '../../utils/fileValidation';
 import MetricsCard from '../shared/MetricsCard';
 import QuickActions from '../shared/QuickActions';
 import RecentActivity from '../shared/RecentActivity';
@@ -11,6 +12,7 @@ import UploadQueue from '../shared/UploadQueue';
 
 export default function AdUpload() {
   const [dragActive, setDragActive] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addNotification } = useNotification();
   const navigate = useNavigate();
@@ -126,29 +128,45 @@ export default function AdUpload() {
 
   const handleFiles = async (files: FileList) => {
     const validFiles: File[] = [];
+    const errors: string[] = [];
     
-    // Quick validation before starting uploads
+    // Clear previous validation errors
+    setValidationErrors([]);
+    
+    // Comprehensive validation for each file
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Basic file type check
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        addNotification('error', 'Invalid File Type', `${file.name} is not a supported image or video file`);
+      try {
+        // Use comprehensive validation
+        const validation = await validateFile(file);
+        
+        if (!validation.isValid) {
+          const errorMessage = `${file.name}: ${validation.errors.join(', ')}`;
+          errors.push(errorMessage);
+          addNotification('error', 'Validation Failed', errorMessage);
+          continue;
+        }
+        
+        validFiles.push(file);
+      } catch (error) {
+        console.error('Validation error for file:', file.name, error);
+        const errorMessage = `Failed to validate ${file.name}. Please try again.`;
+        errors.push(errorMessage);
+        addNotification('error', 'Validation Error', errorMessage);
         continue;
       }
-
-      // Basic size check
-      const maxSize = file.type.startsWith('video/') ? 500 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        const maxSizeStr = file.type.startsWith('video/') ? '500MB' : '10MB';
-        addNotification('error', 'File Too Large', `${file.name} exceeds ${maxSizeStr} limit`);
-        continue;
-      }
-      
-      validFiles.push(file);
     }
 
-    if (validFiles.length === 0) return;
+    // Set validation errors for display
+    setValidationErrors(errors);
+
+    if (validFiles.length === 0) {
+      if (errors.length > 0) {
+        addNotification('error', 'No Valid Files', 'All selected files failed validation. Please check the requirements and try again.');
+      }
+      return;
+    }
 
     // Show info about fast upload
     if (validFiles.some(f => f.size > 50 * 1024 * 1024)) {
@@ -260,6 +278,7 @@ export default function AdUpload() {
               <p><strong>Max sizes:</strong> Images 10MB • Videos 500MB</p>
               <p><strong>Resolution:</strong> 1080×1920 or 2160×3840 (9:16 aspect ratio)</p>
               <p><strong>Video duration:</strong> 15 seconds max</p>
+              <p><strong>Validation:</strong> All files are validated for format, size, and dimensions</p>
             </div>
           </div>
         
@@ -273,6 +292,36 @@ export default function AdUpload() {
         />
         </div>
       </div>
+
+      {/* Validation Errors Display */}
+      {validationErrors.length > 0 && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                File Validation Errors
+              </h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                <ul className="list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-3">
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  Please ensure your files meet all requirements: JPG/PNG images (10MB max), MP4 videos (500MB max), 9:16 aspect ratio, and 1080×1920 or 2160×3840 resolution.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upload Queue */}
       {queue.length > 0 && (
